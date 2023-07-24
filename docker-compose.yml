@@ -1,0 +1,17 @@
+# docker-compose.yml
+
+version: '3.8'
+services:
+
+  postgres:
+    container_name: babylon_db
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - '${DATABASE_PORT}:5432'
+
+volumes:
+  postgres:
