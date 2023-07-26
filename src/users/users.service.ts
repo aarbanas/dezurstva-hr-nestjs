@@ -59,19 +59,4 @@ export class UsersService {
   remove(id: number) {
     return this.prismaService.user.delete({ where: { id } });
   }
-
-  // private async fixPassword() {
-  //   const admin = await this.prismaService.user.findUnique({
-  //     where: { id: 1 },
-  //   });
-  //   console.log(admin);
-  //
-  //   const password = await this.bcryptService.hashPassword('TRhCbU4642RGbLZW');
-  //   const result = await this.prismaService.user.update({
-  //     where: { id: 1 },
-  //     data: { password },
-  //   });
-  //
-  //   console.log(result);
-  // }
 }
