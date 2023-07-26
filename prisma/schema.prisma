@@ -11,25 +11,26 @@ datasource db {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  email       String       @unique
-  password    String
-  firstname   String
-  lastname    String
-  role        Role
-  type        UserType?
-  certificate Certificate?
-  active      Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  password     String
+  firstname    String
+  lastname     String
+  role         Role
+  phone        Int?
+  type         UserType?
+  certificates Certificate[]
+  active       Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Certificate {
   id        Int             @id @default(autoincrement())
   type      CertificateType
   validTill DateTime
-  url       String?
-  user      User            @relation(fields: [userId], references: [id])
+  key       String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int             @unique // relation scalar field (used in the `@relation` attribute above)
 }
 

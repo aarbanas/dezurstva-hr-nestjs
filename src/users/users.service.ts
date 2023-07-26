@@ -9,7 +9,7 @@ import { BcryptService } from '../service/bcrypt.service';
 export class UsersService {
   constructor(
     private prismaService: PrismaService,
-    private bcryptService: BcryptService,
+    public bcryptService: BcryptService,
   ) {}
   async create(createUserDto: CreateUserDto) {
     const password = await this.bcryptService.hashPassword(
@@ -45,6 +45,10 @@ export class UsersService {
     return this.prismaService.user.findUnique({ where: { id } });
   }
 
+  findByEmail(email: string) {
+    return this.prismaService.user.findUnique({ where: { email } });
+  }
+
   update(id: number, updateUserDto: UpdateUserDto) {
     return this.prismaService.user.update({
       where: { id },
@@ -55,4 +59,19 @@ export class UsersService {
   remove(id: number) {
     return this.prismaService.user.delete({ where: { id } });
   }
+
+  // private async fixPassword() {
+  //   const admin = await this.prismaService.user.findUnique({
+  //     where: { id: 1 },
+  //   });
+  //   console.log(admin);
+  //
+  //   const password = await this.bcryptService.hashPassword('TRhCbU4642RGbLZW');
+  //   const result = await this.prismaService.user.update({
+  //     where: { id: 1 },
+  //     data: { password },
+  //   });
+  //
+  //   console.log(result);
+  // }
 }
