@@ -1,5 +1,5 @@
+import { Role } from '@prisma/client';
 import { CanActivate, ExecutionContext, mixin, Type } from '@nestjs/common';
-import { Role, User } from '@prisma/client';
 import { SessionUser } from '../passport-strategies/jwt.strategy';
 
 const RoleGuard = (roles: Role[]): Type<any> => {
