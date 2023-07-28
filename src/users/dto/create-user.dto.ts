@@ -1,6 +1,12 @@
-import { UserType } from '@prisma/client';
+import { Role, UserType } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty()
@@ -9,17 +15,56 @@ export class CreateUserDto {
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsString()
   password: string;
 
   @ApiProperty()
-  @IsNotEmpty()
-  firstname: string;
+  @IsEnum(Role)
+  role: Role;
 
   @ApiProperty()
   @IsNotEmpty()
-  lastname: string;
+  @IsString()
+  city: string;
 
   @ApiProperty()
+  @ValidateIf((object) => object.role === Role.USER)
+  @IsNotEmpty()
+  @IsString()
+  firstname?: string;
+
+  @ApiProperty()
+  @ValidateIf((object) => object.role === Role.USER)
+  @IsNotEmpty()
+  @IsString()
+  lastname?: string;
+
+  @ApiProperty()
+  @ValidateIf((object) => object.role === Role.USER)
+  @IsNotEmpty()
+  @IsString()
+  phone?: string;
+
+  @ApiProperty()
+  @ValidateIf((object) => object.role === Role.USER)
   @IsEnum(UserType)
-  type: UserType;
+  type?: UserType;
+
+  @ApiProperty()
+  @ValidateIf((object) => object.role === Role.ORGANISATION)
+  @IsNotEmpty()
+  @IsString()
+  name?: string;
+
+  @ApiProperty()
+  @ValidateIf((object) => object.role === Role.ORGANISATION)
+  @IsNotEmpty()
+  @IsString()
+  street?: string;
+
+  @ApiProperty()
+  @ValidateIf((object) => object.role === Role.ORGANISATION)
+  @IsNotEmpty()
+  @IsString()
+  oib?: string;
 }

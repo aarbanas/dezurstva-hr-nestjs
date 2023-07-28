@@ -11,32 +11,54 @@ datasource db {
 }
 
 model User {
+  id                       Int                     @id @default(autoincrement())
+  email                    String                  @unique
+  password                 String
+  role                     Role
+  active                   Boolean                 @default(false)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  userAttributes           UserAttributes?         @relation(fields: [userAttributesId], references: [id], onDelete: Cascade)
+  userAttributesId         Int?                    @unique
+  organisationAttributes   OrganisationAttributes? @relation(fields: [organisationAttributesId], references: [id], onDelete: Cascade)
+  organisationAttributesId Int?                    @unique
+}
+
+model UserAttributes {
   id           Int           @id @default(autoincrement())
-  email        String        @unique
-  password     String
   firstname    String
   lastname     String
-  role         Role
-  phone        Int?
+  city         String
+  phone        String?
   type         UserType?
+  User         User?
   certificates Certificate[]
-  active       Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+}
+
+model OrganisationAttributes {
+  id     Int    @id @default(autoincrement())
+  name   String
+  street String
+  city   String
+  oib    String
+  User   User?
 }
 
 model Certificate {
-  id        Int             @id @default(autoincrement())
-  type      CertificateType
-  validTill DateTime
-  key       String
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int             @unique // relation scalar field (used in the `@relation` attribute above)
+  id              Int             @id @default(autoincrement())
+  type            CertificateType
+  validTill       DateTime
+  key             String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  userAttribute   UserAttributes? @relation(fields: [userAttributeId], references: [id], onDelete: Cascade)
+  userAttributeId Int?
 }
 
 enum Role {
   USER
   ADMIN
+  ORGANISATION
 }
 
 enum UserType {

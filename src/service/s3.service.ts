@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common';
 import {
   DeleteObjectCommand,
   DeleteObjectCommandOutput,
+  DeleteObjectsCommand,
+  DeleteObjectsCommandOutput,
   GetObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -48,10 +50,23 @@ export class S3Service {
     return getSignedUrl(this.s3Client, command);
   }
 
-  async delete(key: string): Promise<DeleteObjectCommandOutput> {
+  async deleteOne(key: string): Promise<DeleteObjectCommandOutput> {
     const command = new DeleteObjectCommand({
       Bucket: this.bucket,
       Key: key,
+    });
+
+    return this.s3Client.send(command);
+  }
+
+  async deleteMany(keys: string[]): Promise<DeleteObjectsCommandOutput> {
+    const command = new DeleteObjectsCommand({
+      Bucket: this.bucket,
+      Delete: {
+        Objects: keys.map((key) => {
+          return { Key: key };
+        }),
+      },
     });
 
     return this.s3Client.send(command);

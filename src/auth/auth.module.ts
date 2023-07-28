@@ -25,13 +25,3 @@ import { JwtStrategy } from './passport-strategies/jwt.strategy';
   controllers: [AuthController],
 })
 export class AuthModule {}
-
-/*
-JwtModule.registerAsync({
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-        signOptions: { expiresIn: '60s' },
-      }),
-      inject: [ConfigService],
-    }),
- */

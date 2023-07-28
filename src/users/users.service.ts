@@ -1,23 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindUserDto } from './dto/find-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BcryptService } from '../service/bcrypt.service';
+import { ICreateStrategy } from './create-strategy/icreate.strategy';
+import { S3Service } from '../service/s3.service';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
   constructor(
     private prismaService: PrismaService,
+    private s3Service: S3Service,
     public bcryptService: BcryptService,
   ) {}
-  async create(createUserDto: CreateUserDto) {
+
+  async create(createUserDto: CreateUserDto, strategy: ICreateStrategy) {
     const password = await this.bcryptService.hashPassword(
       createUserDto.password,
     );
-    return this.prismaService.user.create({
-      data: { ...createUserDto, role: 'USER', password },
-    });
+
+    return strategy.create({ ...createUserDto, password });
   }
 
   async find(query: FindUserDto) {
@@ -35,6 +39,7 @@ export class UsersService {
         take,
         ...(orderBy && { orderBy }),
         where: { role: 'USER', active: true },
+        include: { userAttributes: true },
       }),
     ]);
 
@@ -42,21 +47,76 @@ export class UsersService {
   }
 
   findOne(id: number) {
-    return this.prismaService.user.findUnique({ where: { id } });
+    return this.prismaService.user.findUnique({
+      where: { id },
+      select: {
+        userAttributes: true,
+        organisationAttributes: true,
+        id: true,
+        email: true,
+        active: true,
+      },
+    });
   }
 
   findByEmail(email: string) {
     return this.prismaService.user.findUnique({ where: { email } });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+      select: { role: true },
+    });
+    if (!user) throw new NotFoundException();
+    const userData = { active: updateUserDto.active };
+    const userAttributesData = {
+      firstname: updateUserDto.firstname,
+      lastname: updateUserDto.lastname,
+      city: updateUserDto.city,
+      phone: updateUserDto.phone,
+      type: updateUserDto.type,
+    };
+    const organisationAttributesData = {
+      name: updateUserDto.name,
+      street: updateUserDto.street,
+      oib: updateUserDto.oib,
+    };
+
     return this.prismaService.user.update({
       where: { id },
-      data: { ...updateUserDto },
+      data: {
+        ...userData,
+        ...(user.role === Role.USER && {
+          userAttributes: { update: { ...userAttributesData } },
+        }),
+        ...(user.role === Role.ORGANISATION && {
+          organisationAttributes: { update: { ...organisationAttributesData } },
+        }),
+      },
+      select: {
+        userAttributes: true,
+        organisationAttributes: true,
+        id: true,
+        email: true,
+        active: true,
+      },
     });
   }
 
-  remove(id: number) {
+  async remove(id: number) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+      select: {
+        userAttributes: { select: { certificates: { select: { key: true } } } },
+        email: true,
+      },
+    });
+    if (user?.userAttributes?.certificates?.length) {
+      const keys = user.userAttributes.certificates.map(({ key }) => key);
+      await this.s3Service.deleteMany(keys);
+    }
+
     return this.prismaService.user.delete({ where: { id } });
   }
 }
