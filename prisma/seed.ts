@@ -15,6 +15,15 @@ async function main() {
     process.env.ADMIN_PASSWORD!,
     saltOrRounds,
   );
+  const userAttributes = await prisma.userAttributes.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      firstname: 'Fero',
+      lastname: 'God',
+      city: 'Ljubljana',
+    },
+  });
   // create admin user
   const user = await prisma.user.upsert({
     where: { email: 'admin@babylon.com' },
@@ -22,10 +31,9 @@ async function main() {
     create: {
       email: 'admin@babylon.com',
       password,
-      firstname: 'Fero',
-      lastname: 'God',
       role: 'ADMIN',
       active: true,
+      userAttributesId: userAttributes.id,
     },
   });
 

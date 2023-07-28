@@ -1,3 +1,13 @@
+import { Role } from '@prisma/client';
+import RoleGuard from '../auth/guards/role.guard';
+import { User } from '../decorators/user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CertificatesService } from './certificates.service';
+import { CreateCertificateDto } from './dto/create-certificate.dto';
+import { UpdateCertificateDto } from './dto/update-certificate.dto';
+import { SessionUser } from '../auth/passport-strategies/jwt.strategy';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import {
   Controller,
   Get,
@@ -11,24 +21,30 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Patch,
+  UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { CertificatesService } from './certificates.service';
-import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
-import { UpdateCertificateDto } from './dto/update-certificate.dto';
+import { IsMeGuard } from '../auth/guards/is-me.guard';
 
 const FILE_SIZE = 3 * 1000 * 1000;
 @Controller('certificates')
 @ApiTags('certificates')
+@ApiBearerAuth()
 export class CertificatesController {
   constructor(private readonly certificatesService: CertificatesService) {}
 
   @Post()
-  create(@Body() createCertificateDto: CreateCertificateDto) {
+  @UseGuards(JwtAuthGuard, RoleGuard([Role.USER, Role.ADMIN]))
+  create(
+    @Body() createCertificateDto: CreateCertificateDto,
+    @User() user: SessionUser,
+  ) {
+    if (user.id !== createCertificateDto.userId) throw new ForbiddenException();
+
     return this.certificatesService.create(createCertificateDto);
   }
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, IsMeGuard)
   update(
     @Body() updateCertificateDto: UpdateCertificateDto,
     @Param('id') id: string,
@@ -37,16 +53,18 @@ export class CertificatesController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, IsMeGuard)
   get(@Param('id') id: string) {
     return this.certificatesService.get(+id);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, IsMeGuard)
   remove(@Param('id') id: string) {
     return this.certificatesService.remove(+id);
   }
 
-  @Post('upload/:id')
+  @Post('upload')
   @ApiBody({
     schema: {
       type: 'object',
@@ -60,6 +78,7 @@ export class CertificatesController {
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN, Role.USER]))
   upload(
     @UploadedFile(
       new ParseFilePipe({
@@ -73,17 +92,19 @@ export class CertificatesController {
       }),
     )
     file: Express.Multer.File,
-    @Param('id') id: string, // TODO Change when auth is implemented
+    @User() user: SessionUser,
   ) {
-    return this.certificatesService.upload(file, id);
+    return this.certificatesService.upload(file, user.id.toString());
   }
 
   @Get('download/:id')
+  @UseGuards(JwtAuthGuard)
   download(@Param('id') id: string) {
     return this.certificatesService.getFile(+id);
   }
 
   @Delete('delete/:id')
+  @UseGuards(JwtAuthGuard, IsMeGuard)
   removeFile(@Param('id') id: string) {
     return this.certificatesService.deleteFile(+id);
   }

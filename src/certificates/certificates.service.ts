@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
-import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../service/s3.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { MissingCertificateError } from './certificate.errors';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { UpdateCertificateDto } from './dto/update-certificate.dto';
 
 @Injectable()
@@ -18,9 +18,19 @@ export class CertificatesService {
     });
   }
 
-  create(createCertificateDto: CreateCertificateDto) {
+  async create(createCertificateDto: CreateCertificateDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: createCertificateDto.userId },
+    });
+    if (!user?.userAttributesId) throw new NotFoundException();
+
     return this.prismaService.certificate.create({
-      data: createCertificateDto,
+      data: {
+        key: createCertificateDto.key,
+        type: createCertificateDto.type,
+        validTill: createCertificateDto.validTill,
+        userAttributeId: user.userAttributesId,
+      },
     });
   }
 
@@ -36,7 +46,7 @@ export class CertificatesService {
       where: { id },
     });
     if (!certificate) throw new MissingCertificateError();
-    if (certificate.key) await this.s3Service.delete(certificate.key);
+    if (certificate.key) await this.s3Service.deleteOne(certificate.key);
 
     return this.prismaService.certificate.delete({ where: { id } });
   }
@@ -61,6 +71,6 @@ export class CertificatesService {
       })) || {};
     if (!key) throw new MissingCertificateError();
 
-    return this.s3Service.delete(key);
+    return this.s3Service.deleteOne(key);
   }
 }

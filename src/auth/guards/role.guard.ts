@@ -1,21 +1,18 @@
-import { Reflector } from '@nestjs/core';
+import { CanActivate, ExecutionContext, mixin, Type } from '@nestjs/common';
 import { Role, User } from '@prisma/client';
-import { ROLE_KEY } from '../decorators/roles.decorator';
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { SessionUser } from '../passport-strategies/jwt.strategy';
 
-@Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+const RoleGuard = (roles: Role[]): Type<any> => {
+  class RoleGuardMixin implements CanActivate {
+    canActivate(context: ExecutionContext) {
+      const request = context.switchToHttp().getRequest();
+      const user: SessionUser = request.user;
 
-  canActivate(context: ExecutionContext): boolean {
-    const requiredRole = this.reflector.getAllAndOverride<Role>(ROLE_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (!requiredRole) {
-      return true;
+      return roles.includes(user.role);
     }
-    const { user }: { user: User } = context.switchToHttp().getRequest();
-    return user.role === requiredRole;
   }
-}
+
+  return mixin(RoleGuardMixin);
+};
+
+export default RoleGuard;
