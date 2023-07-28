@@ -1,7 +1,15 @@
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+
+type TokenPayloadType = {
+  username: string;
+  sub: number;
+  role: Role;
+  iat: number;
+  exp: number;
+};
 
 @Injectable()
 export class AuthService {
@@ -33,9 +41,14 @@ export class AuthService {
       sub: user.id,
       role: user.role,
     };
+    const accessToken = this.jwtService.sign(payload);
+    const decodedToken = this.jwtService.decode(
+      accessToken,
+    ) as TokenPayloadType;
 
     return {
-      access_token: this.jwtService.sign(payload),
+      accessToken,
+      expiredAt: decodedToken.exp * 1000,
     };
   }
 }
