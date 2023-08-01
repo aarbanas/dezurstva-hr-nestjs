@@ -53,6 +53,7 @@ export class UsersService {
         userAttributes: true,
         organisationAttributes: true,
         id: true,
+        role: true,
         email: true,
         active: true,
       },
