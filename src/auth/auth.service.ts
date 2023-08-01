@@ -23,7 +23,7 @@ export class AuthService {
     password: string,
   ): Promise<Omit<User, 'password'> | undefined> {
     const user = await this.userService.findByEmail(email);
-    if (!user) return undefined;
+    if (!user?.active) return undefined;
 
     const validate = await this.userService.bcryptService.validatePassword(
       password,
