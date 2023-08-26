@@ -69,8 +69,11 @@ export class UsersService {
       where: { id },
       select: { role: true },
     });
+
     if (!user) throw new NotFoundException();
+
     const userData = { active: updateUserDto.active };
+
     const userAttributesData = {
       firstname: updateUserDto.firstname,
       lastname: updateUserDto.lastname,
@@ -78,10 +81,12 @@ export class UsersService {
       phone: updateUserDto.phone,
       type: updateUserDto.type,
     };
+
     const organisationAttributesData = {
       name: updateUserDto.name,
       street: updateUserDto.street,
       oib: updateUserDto.oib,
+      city: updateUserDto.city,
     };
 
     return this.prismaService.user.update({
