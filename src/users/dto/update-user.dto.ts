@@ -1,38 +1,52 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+} from 'class-validator';
 import { UserType } from '@prisma/client';
 
 export class UpdateUserDto {
   @ApiProperty()
   @IsOptional()
+  @IsNotEmpty()
   firstname?: string;
 
   @ApiProperty()
   @IsOptional()
+  @IsNotEmpty()
   lastname?: string;
 
   @ApiProperty()
   @IsOptional()
+  @IsNotEmpty()
   city?: string;
 
   @ApiProperty()
   @IsOptional()
+  @IsPhoneNumber('HR')
   phone?: string;
 
   @ApiProperty()
   @IsOptional()
+  @IsNotEmpty()
   name?: string;
 
   @ApiProperty()
   @IsOptional()
+  @IsNotEmpty()
   street?: string;
 
   @ApiProperty()
   @IsOptional()
+  @IsNotEmpty()
   oib?: string;
 
   @ApiProperty()
   @IsOptional()
+  @IsBoolean()
   active?: boolean;
 
   @ApiProperty()
