@@ -49,8 +49,8 @@ export class UsersService {
     return { data, meta: { skip, take, count } };
   }
 
-  findOne(id: number) {
-    return this.prismaService.user.findUnique({
+  async findOne(id: number) {
+    const user = await this.prismaService.user.findUnique({
       where: { id },
       select: {
         userAttributes: true,
@@ -59,8 +59,25 @@ export class UsersService {
         role: true,
         email: true,
         active: true,
+        avatarKey: true,
       },
     });
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    const { avatarKey, ...restUser } = user;
+
+    let avatarUrl = null;
+    if (avatarKey) {
+      avatarUrl = await this.s3Service.get(avatarKey);
+    }
+
+    return {
+      ...restUser,
+      avatarUrl,
+    };
   }
 
   findByEmail(email: string) {
