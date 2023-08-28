@@ -1,12 +1,15 @@
+import { extname } from 'path';
+import { Role } from '@prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { FindUserDto } from './dto/find-user.dto';
+import { S3Service } from '../service/s3.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BcryptService } from '../service/bcrypt.service';
 import { ICreateStrategy } from './create-strategy/icreate.strategy';
-import { S3Service } from '../service/s3.service';
-import { Role } from '@prisma/client';
+import { UploadAvatarResponse } from './dto/upload-avatar-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -124,5 +127,37 @@ export class UsersService {
     }
 
     return this.prismaService.user.delete({ where: { id } });
+  }
+
+  async uploadAvatar(
+    id: number,
+    file: Express.Multer.File,
+  ): Promise<UploadAvatarResponse> {
+    const user = await this.prismaService.user.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+      },
+    });
+
+    const fileExt = extname(file.originalname);
+    const avatarKey = `avatars/${user.id}${fileExt}`;
+
+    await this.s3Service.upload(file.buffer, avatarKey, {
+      mimetype: file.mimetype,
+    });
+
+    await this.prismaService.user.update({
+      where: { id },
+      data: {
+        avatarKey,
+      },
+    });
+
+    const avatarUrl = await this.s3Service.get(avatarKey);
+
+    return {
+      avatarUrl,
+    };
   }
 }

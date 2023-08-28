@@ -18,17 +18,21 @@ type UploadFileMetadata = {
 
 @Injectable()
 export class S3Service {
-  constructor(private configService: ConfigService) {}
-
   private bucket = this.configService.get('S3_BUCKET');
 
-  private s3Client = new S3Client({
-    region: this.configService.get('S3_REGION'),
-    credentials: {
-      accessKeyId: this.configService.get('S3_ACCESS_KEY_ID')!,
-      secretAccessKey: this.configService.get('S3_SECRET_ACCESS_KEY')!,
-    },
-  });
+  private s3Client: S3Client;
+
+  constructor(private configService: ConfigService) {
+    this.s3Client = new S3Client({
+      region: this.configService.get('S3_REGION'),
+      credentials: {
+        accessKeyId: this.configService.getOrThrow('S3_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.getOrThrow('S3_SECRET_ACCESS_KEY'),
+      },
+      endpoint: this.configService.get('S3_MOCK_URL'),
+      forcePathStyle: !!this.configService.get('S3_MOCK_URL'),
+    });
+  }
 
   async upload(
     dataBuffer: Buffer,
