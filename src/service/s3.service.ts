@@ -12,6 +12,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+type UploadFileMetadata = {
+  mimetype?: string;
+};
+
 @Injectable()
 export class S3Service {
   constructor(private configService: ConfigService) {}
@@ -26,15 +30,18 @@ export class S3Service {
     },
   });
 
-  async upload(file: Express.Multer.File, userId: string): Promise<string> {
-    const key = `documents/${userId}/${file.originalname}`;
+  async upload(
+    dataBuffer: Buffer,
+    key: string,
+    metadata?: UploadFileMetadata,
+  ): Promise<string> {
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
-        Body: file.buffer,
+        Body: dataBuffer,
         ACL: 'private',
-        ContentType: file.mimetype,
+        ContentType: metadata?.mimetype,
       }),
     );
 
