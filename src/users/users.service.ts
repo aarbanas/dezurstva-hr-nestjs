@@ -1,4 +1,5 @@
 import { extname } from 'path';
+import { createHash } from 'crypto';
 import { Role } from '@prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
@@ -9,7 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BcryptService } from '../service/bcrypt.service';
 import { ICreateStrategy } from './create-strategy/icreate.strategy';
-import { UploadAvatarResponse } from './dto/upload-avatar-response.dto';
+import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -59,7 +60,7 @@ export class UsersService {
         role: true,
         email: true,
         active: true,
-        avatarKey: true,
+        profilePhotoKey: true,
       },
     });
 
@@ -67,16 +68,16 @@ export class UsersService {
       throw new NotFoundException();
     }
 
-    const { avatarKey, ...restUser } = user;
+    const { profilePhotoKey, ...restUser } = user;
 
-    let avatarUrl = null;
-    if (avatarKey) {
-      avatarUrl = await this.s3Service.get(avatarKey);
+    let profilePhoto = null;
+    if (profilePhotoKey) {
+      profilePhoto = await this.s3Service.get(profilePhotoKey);
     }
 
     return {
       ...restUser,
-      avatarUrl,
+      profilePhoto,
     };
   }
 
@@ -149,7 +150,7 @@ export class UsersService {
   async uploadAvatar(
     id: number,
     file: Express.Multer.File,
-  ): Promise<UploadAvatarResponse> {
+  ): Promise<UploadProfilePhotoResponse> {
     const user = await this.prismaService.user.findUniqueOrThrow({
       where: { id },
       select: {
@@ -158,23 +159,24 @@ export class UsersService {
     });
 
     const fileExt = extname(file.originalname);
-    const avatarKey = `avatars/${user.id}${fileExt}`;
+    const filename = createHash('md5').update(String(user.id)).digest('hex');
+    const profilePhotoKey = `profile_pictures/${filename}${fileExt}`;
 
-    await this.s3Service.upload(file.buffer, avatarKey, {
+    await this.s3Service.upload(file.buffer, profilePhotoKey, {
       mimetype: file.mimetype,
     });
 
     await this.prismaService.user.update({
       where: { id },
       data: {
-        avatarKey,
+        profilePhotoKey,
       },
     });
 
-    const avatarUrl = await this.s3Service.get(avatarKey);
+    const profilePhoto = await this.s3Service.get(profilePhotoKey);
 
     return {
-      avatarUrl,
+      profilePhoto,
     };
   }
 }

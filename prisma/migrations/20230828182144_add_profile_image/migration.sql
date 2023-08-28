@@ -2,4 +2,4 @@
 ALTER TABLE
   "User"
 ADD
-  COLUMN "avatarKey" TEXT;
+  COLUMN "profilePhotoKey" TEXT;

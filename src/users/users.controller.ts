@@ -36,7 +36,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionUser } from '../auth/passport-strategies/jwt.strategy';
 import { CreateUserStrategy } from './create-strategy/create-user.strategy';
 import { CreateOrganisationStrategy } from './create-strategy/create-organisation.strategy';
-import { UploadAvatarResponse } from './dto/upload-avatar-response.dto';
+import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 
 @Controller('users')
 @ApiTags('users')
@@ -106,7 +106,7 @@ export class UsersController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({
     status: 200,
-    type: UploadAvatarResponse,
+    type: UploadProfilePhotoResponse,
   })
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('avatar'))
@@ -126,7 +126,7 @@ export class UsersController {
     )
     file: Express.Multer.File,
     @User() user: SessionUser,
-  ): Promise<UploadAvatarResponse> {
+  ): Promise<UploadProfilePhotoResponse> {
     return this.usersService.uploadAvatar(user.id, file);
   }
 }

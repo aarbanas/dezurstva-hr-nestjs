@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UploadAvatarResponse {
+export class UploadProfilePhotoResponse {
   @ApiProperty()
-  avatarUrl: string;
+  profilePhoto: string;
 }
