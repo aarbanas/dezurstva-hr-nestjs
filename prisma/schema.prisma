@@ -22,6 +22,7 @@ model User {
   userAttributesId         Int?                    @unique
   organisationAttributes   OrganisationAttributes? @relation(fields: [organisationAttributesId], references: [id], onDelete: Cascade)
   organisationAttributesId Int?                    @unique
+  avatarKey                String?
 }
 
 model UserAttributes {
