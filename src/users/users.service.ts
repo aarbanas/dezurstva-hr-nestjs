@@ -25,9 +25,8 @@ export class UsersService {
   }
 
   async find(query: FindUserDto) {
-    const skip =
-      query.page && query.limit ? Number(query.page) * Number(query.limit) : 0;
     const take = query.limit ? Number(query.limit) : 10;
+    const skip = query.page ? Number(query.page) * take : 0;
     const orderBy =
       query.sort && (query.dir === 'asc' || query.dir === 'desc')
         ? { [query.sort]: query.dir }
