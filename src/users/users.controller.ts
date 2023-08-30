@@ -38,6 +38,7 @@ import { CreateUserStrategy } from './create-strategy/create-user.strategy';
 import { CreateOrganisationStrategy } from './create-strategy/create-organisation.strategy';
 import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 
+const FILE_SIZE = 3 * 1000 * 1000;
 @Controller('users')
 @ApiTags('users')
 export class UsersController {
@@ -117,7 +118,7 @@ export class UsersController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({
-            maxSize: 3 * 1000 * 1000,
+            maxSize: FILE_SIZE,
             message: 'Max file size is 3MB',
           }),
           new FileTypeValidator({ fileType: /(jpg|jpeg|png)$/ }),
