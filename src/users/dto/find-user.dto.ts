@@ -12,4 +12,7 @@ export class FindUserDto {
 
   @ApiPropertyOptional()
   dir: string;
+
+  @ApiPropertyOptional()
+  filter: object;
 }
