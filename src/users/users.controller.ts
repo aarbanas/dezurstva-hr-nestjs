@@ -51,7 +51,7 @@ export class UsersController {
 
   @Get()
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN, Role.ORGANISATION]))
+  @UseGuards(JwtAuthGuard)
   find(@Query() query: FindUserDto) {
     return this.usersService.find(query);
   }
