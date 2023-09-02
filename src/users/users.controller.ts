@@ -110,10 +110,10 @@ export class UsersController {
     type: UploadProfilePhotoResponse,
   })
   @ApiBearerAuth()
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(FileInterceptor('profilePhoto'))
   @UseGuards(JwtAuthGuard)
   @Post('upload-avatar')
-  uploadAvatar(
+  uploadProfilePhoto(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -128,6 +128,6 @@ export class UsersController {
     file: Express.Multer.File,
     @User() user: SessionUser,
   ): Promise<UploadProfilePhotoResponse> {
-    return this.usersService.uploadAvatar(user.id, file);
+    return this.usersService.uploadProfilePhoto(user.id, file);
   }
 }

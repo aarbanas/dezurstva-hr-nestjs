@@ -147,7 +147,7 @@ export class UsersService {
     return this.prismaService.user.delete({ where: { id } });
   }
 
-  async uploadAvatar(
+  async uploadProfilePhoto(
     id: number,
     file: Express.Multer.File,
   ): Promise<UploadProfilePhotoResponse> {
@@ -160,7 +160,7 @@ export class UsersService {
 
     const fileExt = extname(file.originalname);
     const filename = createHash('md5').update(String(user.id)).digest('hex');
-    const profilePhotoKey = `profile_pictures/${filename}${fileExt}`;
+    const profilePhotoKey = `profile_photos/${filename}${fileExt}`;
 
     await this.s3Service.upload(file.buffer, profilePhotoKey, {
       mimetype: file.mimetype,
