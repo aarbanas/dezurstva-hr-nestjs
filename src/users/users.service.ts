@@ -37,18 +37,15 @@ export class UsersService {
         ? { [query.sort]: query.dir }
         : null;
     const filter = query.filter
-      ? Object.entries(query.filter).reduce(
+      ? Object.entries(query.filter).reduce<UserAttributesFilter>(
           (filterObject: UserAttributesFilter, [key, value]) => {
-            if (!filterObject?.userAttributes)
-              filterObject = { userAttributes: {} };
-
             filterObject.userAttributes[key] = {
               startsWith: value,
               mode: 'insensitive',
             };
             return filterObject;
           },
-          {} as UserAttributesFilter,
+          { userAttributes: {} },
         )
       : null;
     const [count, data] = await this.prismaService.$transaction([
