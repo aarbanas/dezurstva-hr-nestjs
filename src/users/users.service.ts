@@ -8,6 +8,11 @@ import { ICreateStrategy } from './create-strategy/icreate.strategy';
 import { S3Service } from '../service/s3.service';
 import { Role } from '@prisma/client';
 
+type UserAttributesFilter = {
+  userAttributes: {
+    [key: string]: { startsWith: string; mode: 'insensitive' };
+  };
+};
 @Injectable()
 export class UsersService {
   constructor(
@@ -31,13 +36,31 @@ export class UsersService {
       query.sort && (query.dir === 'asc' || query.dir === 'desc')
         ? { [query.sort]: query.dir }
         : null;
+    const filter = query.filter
+      ? Object.entries(query.filter).reduce<UserAttributesFilter>(
+          (filterObject: UserAttributesFilter, [key, value]) => {
+            filterObject.userAttributes[key] = {
+              startsWith: value,
+              mode: 'insensitive',
+            };
+            return filterObject;
+          },
+          { userAttributes: {} },
+        )
+      : null;
     const [count, data] = await this.prismaService.$transaction([
-      this.prismaService.user.count({ where: { role: 'USER', active: true } }),
+      this.prismaService.user.count({
+        where: {
+          role: 'USER',
+          active: true,
+          ...(filter && { ...filter }),
+        },
+      }),
       this.prismaService.user.findMany({
         skip,
         take,
         ...(orderBy && { orderBy }),
-        where: { role: 'USER', active: true },
+        where: { role: 'USER', active: true, ...(filter && { ...filter }) },
         include: { userAttributes: true },
       }),
     ]);
