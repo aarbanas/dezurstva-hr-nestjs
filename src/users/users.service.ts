@@ -1,12 +1,16 @@
+import { extname } from 'path';
+import { createHash } from 'crypto';
+import { Role } from '@prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { FindUserDto } from './dto/find-user.dto';
+import { S3Service } from '../service/s3.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BcryptService } from '../service/bcrypt.service';
 import { ICreateStrategy } from './create-strategy/icreate.strategy';
-import { S3Service } from '../service/s3.service';
-import { Role } from '@prisma/client';
+import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 
 type UserAttributesFilter = {
   userAttributes: {
@@ -68,8 +72,8 @@ export class UsersService {
     return { data, meta: { skip, take, count } };
   }
 
-  findOne(id: number) {
-    return this.prismaService.user.findUnique({
+  async findOne(id: number) {
+    const user = await this.prismaService.user.findUnique({
       where: { id },
       select: {
         userAttributes: true,
@@ -78,8 +82,25 @@ export class UsersService {
         role: true,
         email: true,
         active: true,
+        profilePhotoKey: true,
       },
     });
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    const { profilePhotoKey, ...restUser } = user;
+
+    let profilePhoto = null;
+    if (profilePhotoKey) {
+      profilePhoto = await this.s3Service.get(profilePhotoKey);
+    }
+
+    return {
+      ...restUser,
+      profilePhoto,
+    };
   }
 
   findByEmail(email: string) {
@@ -146,5 +167,38 @@ export class UsersService {
     }
 
     return this.prismaService.user.delete({ where: { id } });
+  }
+
+  async uploadProfilePhoto(
+    id: number,
+    file: Express.Multer.File,
+  ): Promise<UploadProfilePhotoResponse> {
+    const user = await this.prismaService.user.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+      },
+    });
+
+    const fileExt = extname(file.originalname);
+    const filename = createHash('md5').update(String(user.id)).digest('hex');
+    const profilePhotoKey = `profile_photos/${filename}${fileExt}`;
+
+    await this.s3Service.upload(file.buffer, profilePhotoKey, {
+      mimetype: file.mimetype,
+    });
+
+    await this.prismaService.user.update({
+      where: { id },
+      data: {
+        profilePhotoKey,
+      },
+    });
+
+    const profilePhoto = await this.s3Service.get(profilePhotoKey);
+
+    return {
+      profilePhoto,
+    };
   }
 }
