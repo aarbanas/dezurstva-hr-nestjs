@@ -52,7 +52,9 @@ export class CertificatesService {
   }
 
   upload(file: Express.Multer.File, userId: string) {
-    return this.s3Service.upload(file, userId);
+    const key = `documents/${userId}/${file.originalname}`;
+
+    return this.s3Service.upload(file.buffer, key, { mimetype: file.mimetype });
   }
 
   async getFile(id: number) {
