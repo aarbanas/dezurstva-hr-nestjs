@@ -12,29 +12,40 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+type UploadFileMetadata = {
+  mimetype?: string;
+};
+
 @Injectable()
 export class S3Service {
-  constructor(private configService: ConfigService) {}
-
   private bucket = this.configService.get('S3_BUCKET');
 
-  private s3Client = new S3Client({
-    region: this.configService.get('S3_REGION'),
-    credentials: {
-      accessKeyId: this.configService.get('S3_ACCESS_KEY_ID')!,
-      secretAccessKey: this.configService.get('S3_SECRET_ACCESS_KEY')!,
-    },
-  });
+  private s3Client: S3Client;
 
-  async upload(file: Express.Multer.File, userId: string): Promise<string> {
-    const key = `documents/${userId}/${file.originalname}`;
+  constructor(private configService: ConfigService) {
+    this.s3Client = new S3Client({
+      region: this.configService.get('S3_REGION'),
+      credentials: {
+        accessKeyId: this.configService.getOrThrow('S3_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.getOrThrow('S3_SECRET_ACCESS_KEY'),
+      },
+      endpoint: this.configService.get('S3_MOCK_URL'),
+      forcePathStyle: !!this.configService.get('S3_MOCK_URL'),
+    });
+  }
+
+  async upload(
+    dataBuffer: Buffer,
+    key: string,
+    metadata?: UploadFileMetadata,
+  ): Promise<string> {
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
-        Body: file.buffer,
+        Body: dataBuffer,
         ACL: 'private',
-        ContentType: file.mimetype,
+        ContentType: metadata?.mimetype,
       }),
     );
 
