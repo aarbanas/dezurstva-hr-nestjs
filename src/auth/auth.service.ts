@@ -30,6 +30,7 @@ export class AuthService {
       user.password,
     );
     if (!validate) return undefined;
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: pwd, ...rest } = user;
     return rest;
