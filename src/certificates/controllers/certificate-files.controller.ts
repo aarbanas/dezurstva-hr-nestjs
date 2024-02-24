@@ -1,5 +1,12 @@
-import { ApiParam, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
 
 import {
   CreateCertificateUploadURLDto,
@@ -14,6 +21,13 @@ export class CertificateFilesController {
     private readonly certificateFilesService: CertificateFilesService,
   ) {}
 
+  @ApiOperation({
+    summary: 'Generate a presigned URL for uploading a certificate file',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: CertificateUploadUrlResponseDto,
+  })
   @Post('/upload-url')
   createUploadURL(
     @Body() data: CreateCertificateUploadURLDto,
@@ -21,9 +35,17 @@ export class CertificateFilesController {
     return this.certificateFilesService.createUploadURL(data);
   }
 
+  @ApiOperation({
+    summary:
+      'Delete a certificate file from the storage using a certificate key',
+  })
   @ApiParam({
     name: 'certificateKey',
     required: true,
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'No Content',
   })
   @Delete('/:certificateKey')
   deleteCertificateFromStorage(
