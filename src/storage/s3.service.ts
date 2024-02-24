@@ -6,6 +6,7 @@ import {
   DeleteObjectsCommand,
   DeleteObjectsCommandOutput,
   GetObjectCommand,
+  ObjectCannedACL,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -44,7 +45,7 @@ export class S3Service {
         Bucket: this.bucket,
         Key: key,
         Body: dataBuffer,
-        ACL: 'private',
+        ACL: ObjectCannedACL.private,
         ContentType: metadata?.mimetype,
       }),
     );

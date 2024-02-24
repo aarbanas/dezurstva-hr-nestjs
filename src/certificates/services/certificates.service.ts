@@ -1,9 +1,9 @@
-import { S3Service } from '../service/s3.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { MissingCertificateError } from './certificate.errors';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
-import { UpdateCertificateDto } from './dto/update-certificate.dto';
+
+import { S3Service } from '../../storage/s3.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { MissingCertificateError } from '../certificate.errors';
+import { CreateCertificateDto, UpdateCertificateDto } from '../dto';
 
 @Injectable()
 export class CertificatesService {
