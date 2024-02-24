@@ -12,6 +12,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { GeneratePresignedUrlOptions } from './types';
 
 type UploadFileMetadata = {
   mimetype?: string;
@@ -82,5 +83,22 @@ export class S3Service {
     });
 
     return this.s3Client.send(command);
+  }
+
+  async getPresignedUploadUrl({
+    key,
+    contentType,
+    expiresIn,
+  }: GeneratePresignedUrlOptions): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      ContentType: contentType,
+      ACL: ObjectCannedACL.public_read_write,
+    });
+
+    return getSignedUrl(this.s3Client, command, {
+      expiresIn,
+    });
   }
 }
