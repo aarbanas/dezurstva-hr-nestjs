@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  HttpCode,
   HttpStatus,
   Param,
   Post,
@@ -29,7 +30,7 @@ export class CertificateFilesController {
     type: CertificateUploadUrlResponseDto,
   })
   @Post('/upload-url')
-  createUploadURL(
+  async createUploadURL(
     @Body() data: CreateCertificateUploadURLDto,
   ): Promise<CertificateUploadUrlResponseDto> {
     return this.certificateFilesService.createUploadURL(data);
@@ -48,7 +49,8 @@ export class CertificateFilesController {
     description: 'No Content',
   })
   @Delete('/:certificateKey')
-  deleteCertificateFromStorage(
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteCertificateFromStorage(
     @Param('certificateKey') certificateKey: string,
   ): Promise<void> {
     return this.certificateFilesService.deleteCertificateFromStorage(
