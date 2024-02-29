@@ -143,7 +143,12 @@ export class UsersRepository {
     });
   }
 
-  async remove(id: number): Promise<Pick<Certificate, 'key'>[] | undefined> {
+  async remove(id: number): Promise<
+    | (Pick<User, 'email'> & {
+        userAttributes: { certificates: { key: string }[] } | null;
+      })
+    | null
+  > {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       select: {
@@ -153,7 +158,7 @@ export class UsersRepository {
     });
     await this.prismaService.user.delete({ where: { id } });
 
-    return user?.userAttributes?.certificates;
+    return user;
   }
 
   async updateProfilePhoto(id: number, profilePhotoKey: string): Promise<void> {

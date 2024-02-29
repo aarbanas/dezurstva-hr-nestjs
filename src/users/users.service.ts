@@ -19,7 +19,7 @@ export class UsersService {
     private readonly prismaService: PrismaService,
     private readonly s3Service: S3Service,
     private readonly usersRepository: UsersRepository,
-    public bcryptService: BcryptService,
+    private readonly bcryptService: BcryptService,
   ) {}
 
   async create(createUserDto: CreateUserDto, strategy: ICreateStrategy) {
@@ -58,10 +58,10 @@ export class UsersService {
   }
 
   async remove(id: number) {
-    const certificates = await this.usersRepository.remove(id);
+    const user = await this.usersRepository.remove(id);
 
-    if (certificates?.length) {
-      const keys = certificates.map(({ key }) => key);
+    if (user?.userAttributes?.certificates?.length) {
+      const keys = user.userAttributes.certificates.map(({ key }) => key);
       await this.s3Service.deleteMany(keys);
     }
   }
@@ -74,11 +74,11 @@ export class UsersService {
     const filename = createHash('md5').update(String(id)).digest('hex');
     const profilePhotoKey = `profile_photos/${filename}${fileExt}`;
 
-    await this.usersRepository.uploadProfilePhoto(id, profilePhotoKey);
-
     await this.s3Service.upload(file.buffer, profilePhotoKey, {
       mimetype: file.mimetype,
     });
+
+    await this.usersRepository.uploadProfilePhoto(id, profilePhotoKey);
 
     const profilePhoto = await this.s3Service.get(profilePhotoKey);
     return {
