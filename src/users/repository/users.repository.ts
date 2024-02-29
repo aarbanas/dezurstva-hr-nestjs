@@ -1,13 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindUserDto } from '../dto/find-user.dto';
-import { Role, User } from '@prisma/client';
+import { Certificate, Role, User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FindResponse } from '../../prisma/types';
-import { S3Service } from '../../service/s3.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UploadProfilePhotoResponse } from '../dto/upload-avatar-response.dto';
-import { extname } from 'path';
-import { createHash } from 'crypto';
 
 type UserAttributesFilter = {
   userAttributes: {
@@ -17,10 +13,7 @@ type UserAttributesFilter = {
 
 @Injectable()
 export class UsersRepository {
-  constructor(
-    private s3Service: S3Service,
-    private prismaService: PrismaService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   private prepareFindQuery(query: FindUserDto, user: User) {
     const take = query.limit ? Number(query.limit) : 10;
@@ -49,6 +42,7 @@ export class UsersRepository {
 
     return { take, skip, orderBy, where };
   }
+
   async find(query: FindUserDto, user: User): Promise<FindResponse<User>> {
     const { take, skip, where, orderBy } = this.prepareFindQuery(query, user);
 
@@ -79,8 +73,7 @@ export class UsersRepository {
       | 'updatedAt'
       | 'userAttributesId'
       | 'organisationAttributesId'
-      | 'profilePhotoKey'
-    > & { profilePhoto: string }
+    >
   > {
     const user = await this.prismaService.user.findUnique({
       where: { id },
@@ -99,17 +92,7 @@ export class UsersRepository {
       throw new NotFoundException();
     }
 
-    const { profilePhotoKey, ...restUser } = user;
-
-    let profilePhoto = '';
-    if (profilePhotoKey) {
-      profilePhoto = await this.s3Service.get(profilePhotoKey);
-    }
-
-    return {
-      ...restUser,
-      profilePhoto,
-    };
+    return user;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -118,7 +101,9 @@ export class UsersRepository {
       select: { role: true },
     });
 
-    if (!user) throw new NotFoundException();
+    if (!user) {
+      throw new NotFoundException();
+    }
 
     const userData = { active: updateUserDto.active };
 
@@ -158,7 +143,7 @@ export class UsersRepository {
     });
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<Pick<Certificate, 'key'>[] | undefined> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       select: {
@@ -166,31 +151,17 @@ export class UsersRepository {
         email: true,
       },
     });
-    if (user?.userAttributes?.certificates?.length) {
-      const keys = user.userAttributes.certificates.map(({ key }) => key);
-      await this.s3Service.deleteMany(keys);
-    }
+    await this.prismaService.user.delete({ where: { id } });
 
-    return this.prismaService.user.delete({ where: { id } });
+    return user?.userAttributes?.certificates;
   }
 
-  async uploadProfilePhoto(
-    id: number,
-    file: Express.Multer.File,
-  ): Promise<UploadProfilePhotoResponse> {
-    const user = await this.prismaService.user.findUniqueOrThrow({
+  async uploadProfilePhoto(id: number, profilePhotoKey: string): Promise<void> {
+    await this.prismaService.user.findUniqueOrThrow({
       where: { id },
       select: {
         id: true,
       },
-    });
-
-    const fileExt = extname(file.originalname);
-    const filename = createHash('md5').update(String(user.id)).digest('hex');
-    const profilePhotoKey = `profile_photos/${filename}${fileExt}`;
-
-    await this.s3Service.upload(file.buffer, profilePhotoKey, {
-      mimetype: file.mimetype,
     });
 
     await this.prismaService.user.update({
@@ -199,11 +170,5 @@ export class UsersRepository {
         profilePhotoKey,
       },
     });
-
-    const profilePhoto = await this.s3Service.get(profilePhotoKey);
-
-    return {
-      profilePhoto,
-    };
   }
 }

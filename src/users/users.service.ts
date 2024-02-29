@@ -9,12 +9,16 @@ import { BcryptService } from '../service/bcrypt.service';
 import { ICreateStrategy } from './create-strategy/icreate.strategy';
 import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 import { UsersRepository } from './repository/users.repository';
+import { S3Service } from '../service/s3.service';
+import { extname } from 'path';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private prismaService: PrismaService,
-    private usersRepository: UsersRepository,
+    private readonly prismaService: PrismaService,
+    private readonly s3Service: S3Service,
+    private readonly usersRepository: UsersRepository,
     public bcryptService: BcryptService,
   ) {}
 
@@ -31,7 +35,18 @@ export class UsersService {
   }
 
   async findOne(id: number) {
-    return this.usersRepository.findOne(id);
+    const user = await this.usersRepository.findOne(id);
+    const { profilePhotoKey, ...restUser } = user;
+
+    let profilePhoto = '';
+    if (profilePhotoKey) {
+      profilePhoto = await this.s3Service.get(profilePhotoKey);
+    }
+
+    return {
+      ...restUser,
+      profilePhoto,
+    };
   }
 
   findByEmail(email: string) {
@@ -43,13 +58,31 @@ export class UsersService {
   }
 
   async remove(id: number) {
-    return this.usersRepository.remove(id);
+    const certificates = await this.usersRepository.remove(id);
+
+    if (certificates?.length) {
+      const keys = certificates.map(({ key }) => key);
+      await this.s3Service.deleteMany(keys);
+    }
   }
 
   async uploadProfilePhoto(
     id: number,
     file: Express.Multer.File,
   ): Promise<UploadProfilePhotoResponse> {
-    return this.usersRepository.uploadProfilePhoto(id, file);
+    const fileExt = extname(file.originalname);
+    const filename = createHash('md5').update(String(id)).digest('hex');
+    const profilePhotoKey = `profile_photos/${filename}${fileExt}`;
+
+    await this.usersRepository.uploadProfilePhoto(id, profilePhotoKey);
+
+    await this.s3Service.upload(file.buffer, profilePhotoKey, {
+      mimetype: file.mimetype,
+    });
+
+    const profilePhoto = await this.s3Service.get(profilePhotoKey);
+    return {
+      profilePhoto,
+    };
   }
 }
