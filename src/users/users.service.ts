@@ -78,7 +78,7 @@ export class UsersService {
       mimetype: file.mimetype,
     });
 
-    await this.usersRepository.uploadProfilePhoto(id, profilePhotoKey);
+    await this.usersRepository.updateProfilePhoto(id, profilePhotoKey);
 
     const profilePhoto = await this.s3Service.get(profilePhotoKey);
     return {
