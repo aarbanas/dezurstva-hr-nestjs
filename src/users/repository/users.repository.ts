@@ -156,7 +156,7 @@ export class UsersRepository {
     return user?.userAttributes?.certificates;
   }
 
-  async uploadProfilePhoto(id: number, profilePhotoKey: string): Promise<void> {
+  async updateProfilePhoto(id: number, profilePhotoKey: string): Promise<void> {
     await this.prismaService.user.findUniqueOrThrow({
       where: { id },
       select: {
