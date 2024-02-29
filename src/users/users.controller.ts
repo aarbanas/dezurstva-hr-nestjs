@@ -15,7 +15,7 @@ import {
   UploadedFile,
   ParseFilePipe,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Role, User as UserModel } from '@prisma/client';
 import { UsersService } from './users.service';
 import RoleGuard from '../auth/guards/role.guard';
 import { FindUserDto } from './dto/find-user.dto';
@@ -68,8 +68,8 @@ export class UsersController {
   @Get()
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  find(@Query() query: FindUserDto) {
-    return this.usersService.find(query);
+  find(@Query() query: FindUserDto, @User() user: UserModel) {
+    return this.usersService.find(query, user);
   }
 
   @Get(':id')
