@@ -2,6 +2,7 @@ import { Role, User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+import { BcryptService } from '../service/bcrypt.service';
 
 type TokenPayloadType = {
   username: string;
@@ -14,8 +15,9 @@ type TokenPayloadType = {
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UsersService,
-    private jwtService: JwtService,
+    private readonly userService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly bcryptService: BcryptService,
   ) {}
 
   async authenticate(
@@ -25,7 +27,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(email);
     if (!user?.active) return undefined;
 
-    const validate = await this.userService.bcryptService.validatePassword(
+    const validate = await this.bcryptService.validatePassword(
       password,
       user.password,
     );
