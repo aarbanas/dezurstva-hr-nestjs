@@ -29,7 +29,7 @@
     "@aws-sdk/s3-request-presigner": "^3.377.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
-    "@nestjs/core": "^10.0.0",
+    "@nestjs/core": "^10.3.3",
     "@nestjs/jwt": "^10.1.0",
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
