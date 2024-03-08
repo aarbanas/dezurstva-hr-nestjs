@@ -20,7 +20,7 @@ type UploadFileMetadata = {
 export class S3Service {
   private bucket = this.configService.get('S3_BUCKET');
 
-  private s3Client: S3Client;
+  private readonly s3Client: S3Client;
 
   constructor(private configService: ConfigService) {
     this.s3Client = new S3Client({
