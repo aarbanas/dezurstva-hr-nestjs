@@ -7,6 +7,7 @@ import { UsersModule } from '../users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LocalStrategy } from './passport-strategies/local.strategy';
 import { JwtStrategy } from './passport-strategies/jwt.strategy';
+import { BcryptService } from '../service/bcrypt.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { JwtStrategy } from './passport-strategies/jwt.strategy';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, BcryptService],
   controllers: [AuthController],
 })
 export class AuthModule {}
