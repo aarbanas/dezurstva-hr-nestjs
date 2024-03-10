@@ -35,7 +35,7 @@ export class UsersRepository {
         )
       : null;
     const where = {
-      role: Role.USER,
+      ...(user.role !== Role.ADMIN && { role: Role.USER }),
       ...(user.role !== Role.ADMIN && { active: true }),
       ...(filter && { ...filter }),
     };
