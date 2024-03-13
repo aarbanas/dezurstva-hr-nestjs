@@ -15,13 +15,25 @@ type UserAttributesFilter = {
 export class UsersRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  private prepareOrderBy(sort: string, dir: string) {
+    if (!sort || !(dir === 'asc' || dir === 'desc')) return null;
+
+    if (!sort.includes('.')) return { [sort]: dir };
+
+    const keys = sort.split('.');
+    return keys.reduceRight((acc, current, currentIndex) => {
+      if (currentIndex + 1 < keys.length) return { [current]: acc };
+      return { [current]: dir };
+    }, {});
+  }
+
   private prepareFindQuery(query: FindUserDto, user: User) {
     const take = query.limit ? Number(query.limit) : 10;
     const skip = query.page ? Number(query.page) * take : 0;
-    const orderBy =
-      query.sort && (query.dir === 'asc' || query.dir === 'desc')
-        ? { [query.sort]: query.dir }
-        : null;
+    const orderBy = this.prepareOrderBy(query.sort, query.dir);
+    // query.sort && (query.dir === 'asc' || query.dir === 'desc')
+    //   ? { [query.sort]: query.dir }
+    //   : null;
     const filter = query.filter
       ? Object.entries(query.filter).reduce<UserAttributesFilter>(
           (filterObject: UserAttributesFilter, [key, value]) => {
