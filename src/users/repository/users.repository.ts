@@ -31,9 +31,6 @@ export class UsersRepository {
     const take = query.limit ? Number(query.limit) : 10;
     const skip = query.page ? Number(query.page) * take : 0;
     const orderBy = this.prepareOrderBy(query.sort, query.dir);
-    // query.sort && (query.dir === 'asc' || query.dir === 'desc')
-    //   ? { [query.sort]: query.dir }
-    //   : null;
     const filter = query.filter
       ? Object.entries(query.filter).reduce<UserAttributesFilter>(
           (filterObject: UserAttributesFilter, [key, value]) => {
