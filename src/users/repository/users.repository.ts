@@ -5,11 +5,17 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { FindResponse } from '../../prisma/types';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
+type UserAttribute = {
+  [key: string]: { startsWith: string; mode: 'insensitive' };
+};
+
 type UserAttributesFilter = {
-  userAttributes: {
+  userAttributes?: {
     [key: string]: { startsWith: string; mode: 'insensitive' };
   };
 };
+
+type UserFilter = UserAttribute & UserAttributesFilter;
 
 @Injectable()
 export class UsersRepository {
@@ -27,22 +33,36 @@ export class UsersRepository {
     }, {});
   }
 
+  private prepareFilter(filter: object) {
+    if (!filter) return null;
+
+    return Object.entries(filter).reduce<UserFilter>(
+      (filterObject, [key, value]) => {
+        if (!key.includes('.')) {
+          filterObject[key] = {
+            startsWith: value,
+            mode: 'insensitive',
+          };
+        } else {
+          if (!filterObject.userAttributes) filterObject.userAttributes = {};
+
+          filterObject.userAttributes[key.split('.')[1]] = {
+            startsWith: value,
+            mode: 'insensitive',
+          };
+        }
+
+        return filterObject;
+      },
+      {},
+    );
+  }
+
   private prepareFindQuery(query: FindUserDto, user: User) {
     const take = query.limit ? Number(query.limit) : 10;
     const skip = query.page ? Number(query.page) * take : 0;
     const orderBy = this.prepareOrderBy(query.sort, query.dir);
-    const filter = query.filter
-      ? Object.entries(query.filter).reduce<UserAttributesFilter>(
-          (filterObject: UserAttributesFilter, [key, value]) => {
-            filterObject.userAttributes[key] = {
-              startsWith: value,
-              mode: 'insensitive',
-            };
-            return filterObject;
-          },
-          { userAttributes: {} },
-        )
-      : null;
+    const filter = this.prepareFilter(query.filter);
     const where = {
       ...(user.role !== Role.ADMIN && { role: Role.USER }),
       ...(user.role !== Role.ADMIN && { active: true }),
