@@ -6,12 +6,12 @@ import { FindResponse } from '../../prisma/types';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
 type UserAttribute = {
-  [key: string]: { startsWith: string; mode: 'insensitive' };
+  [key: string]: { startsWith: string; mode: string };
 };
 
 type UserAttributesFilter = {
   userAttributes?: {
-    [key: string]: { startsWith: string; mode: 'insensitive' };
+    [key: string]: { startsWith: string; mode: string };
   };
 };
 
@@ -36,26 +36,41 @@ export class UsersRepository {
   private prepareFilter(filter: object) {
     if (!filter) return null;
 
-    return Object.entries(filter).reduce<UserFilter>(
+    const filterObject = Object.entries(filter).reduce<
+      UserFilter | UserFilter[]
+    >(
       (filterObject, [key, value]) => {
-        if (!key.includes('.')) {
-          filterObject[key] = {
-            startsWith: value,
-            mode: 'insensitive',
-          };
-        } else {
-          if (!filterObject.userAttributes) filterObject.userAttributes = {};
+        const filterValue = {
+          startsWith: value,
+          mode: 'insensitive',
+        };
 
-          filterObject.userAttributes[key.split('.')[1]] = {
-            startsWith: value,
-            mode: 'insensitive',
-          };
+        // Check if we are not searching by userAttributes or any other nested object
+        if (!key.includes('.')) {
+          // Check if we are searching by multiple keys
+          if (Array.isArray(filterObject)) {
+            filterObject.push({ [key]: filterValue } as UserAttribute);
+          } else {
+            filterObject[key] = filterValue;
+          }
+        } else {
+          const attributeKey = key.split('.')[1];
+          // Check if we are searching by multiple keys
+          if (Array.isArray(filterObject)) {
+            filterObject.push({
+              userAttributes: { [attributeKey]: filterValue },
+            } as any);
+          } else {
+            filterObject.userAttributes = { [attributeKey]: filterValue };
+          }
         }
 
         return filterObject;
       },
-      {},
+      Object.entries(filter).length === 1 ? {} : [],
     );
+
+    return Array.isArray(filterObject) ? { OR: filterObject } : filterObject;
   }
 
   private prepareFindQuery(query: FindUserDto, user: User) {
