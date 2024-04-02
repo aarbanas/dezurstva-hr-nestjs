@@ -37,8 +37,11 @@ import { SessionUser } from '../auth/passport-strategies/jwt.strategy';
 import { CreateUserStrategy } from './create-strategy/create-user.strategy';
 import { CreateOrganisationStrategy } from './create-strategy/create-organisation.strategy';
 import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
+import { UserResponseDto } from './dto/find-user-response.dto';
+import { Serialize } from '../interceptors/serialize.interceptor';
 
 const FILE_SIZE = 3 * 1000 * 1000;
+
 @Controller('users')
 @ApiTags('users')
 export class UsersController {
@@ -48,6 +51,7 @@ export class UsersController {
   ) {}
 
   @Post()
+  @Serialize(UserResponseDto)
   create(@Body() createUserDto: CreateUserDto) {
     switch (createUserDto.role) {
       case 'USER':
@@ -80,6 +84,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Serialize(UserResponseDto)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, IsMeGuard)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {

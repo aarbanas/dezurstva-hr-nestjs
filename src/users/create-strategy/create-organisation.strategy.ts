@@ -20,7 +20,7 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
         data: organisationAttributes,
       });
 
-      const user = await tx.user.create({
+      return tx.user.create({
         data: {
           email: createUserDto.email,
           password: createUserDto.password,
@@ -28,10 +28,6 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
           organisationAttributesId: _organisationAttributes.id,
         },
       });
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: pwd, ...rest } = user;
-      return rest;
     });
   }
 }

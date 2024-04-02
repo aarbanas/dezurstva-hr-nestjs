@@ -1,5 +1,5 @@
 import { User } from '@prisma/client';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { FindUserDto } from './dto/find-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -31,7 +31,11 @@ export class UsersService {
   }
 
   async find(query: FindUserDto, user: User) {
-    return this.usersRepository.find(query, user);
+    try {
+      return await this.usersRepository.find(query, user);
+    } catch (e) {
+      throw new NotFoundException();
+    }
   }
 
   async findOne(id: number) {
@@ -49,12 +53,20 @@ export class UsersService {
     };
   }
 
-  findByEmail(email: string) {
-    return this.prismaService.user.findUnique({ where: { email } });
+  async findByEmail(email: string) {
+    try {
+      return await this.prismaService.user.findUnique({ where: { email } });
+    } catch (e) {
+      throw new NotFoundException();
+    }
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    return this.usersRepository.update(id, updateUserDto);
+    try {
+      return await this.usersRepository.update(id, updateUserDto);
+    } catch (e) {
+      throw new NotFoundException();
+    }
   }
 
   async remove(id: number) {
