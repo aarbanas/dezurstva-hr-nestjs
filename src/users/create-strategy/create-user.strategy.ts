@@ -23,7 +23,7 @@ export class CreateUserStrategy implements ICreateStrategy {
       });
 
       // 2. Create user
-      const user = await tx.user.create({
+      return tx.user.create({
         data: {
           email: createUserDto.email,
           password: createUserDto.password,
@@ -31,10 +31,6 @@ export class CreateUserStrategy implements ICreateStrategy {
           userAttributesId: _userAttributes.id,
         },
       });
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: pwd, ...rest } = user;
-      return rest;
     });
   }
 }
