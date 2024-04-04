@@ -3,7 +3,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { S3Service } from '../../storage/s3.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MissingCertificateError } from '../certificate.errors';
-import { CreateCertificateDto, UpdateCertificateDto } from '../dto';
+import {
+  CreateCertificateDto,
+  SearchCertificatesQueryDto,
+  UpdateCertificateDto,
+} from '../dto';
 
 @Injectable()
 export class CertificatesService {
@@ -18,10 +22,25 @@ export class CertificatesService {
     });
   }
 
+  async getAllByUserId(query: SearchCertificatesQueryDto) {
+    const { userId } = query;
+
+    return this.prismaService.certificate.findMany({
+      where: {
+        userAttribute: {
+          User: {
+            id: userId,
+          },
+        },
+      },
+    });
+  }
+
   async create(createCertificateDto: CreateCertificateDto) {
     const user = await this.prismaService.user.findUnique({
       where: { id: createCertificateDto.userId },
     });
+
     if (!user?.userAttributesId) throw new NotFoundException();
 
     return this.prismaService.certificate.create({

@@ -13,16 +13,23 @@ import {
   Patch,
   UseGuards,
   ForbiddenException,
+  Query,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
+import {
+  CreateCertificateDto,
+  UpdateCertificateDto,
+  CertificateResponseDto,
+  SearchCertificatesQueryDto,
+} from '../dto';
 import RoleGuard from '../../auth/guards/role.guard';
 import { User } from '../../decorators/user.decorator';
 import { IsMeGuard } from '../../auth/guards/is-me.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { CreateCertificateDto, UpdateCertificateDto } from '../dto';
+import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { CertificatesService } from '../services/certificates.service';
 import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
 
@@ -35,7 +42,7 @@ export class CertificatesController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RoleGuard([Role.USER, Role.ADMIN]))
-  create(
+  async create(
     @Body() createCertificateDto: CreateCertificateDto,
     @User() user: SessionUser,
   ) {
@@ -45,23 +52,30 @@ export class CertificatesController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, IsMeGuard)
-  update(
+  @UseGuards(JwtAuthGuard)
+  async update(
     @Body() updateCertificateDto: UpdateCertificateDto,
     @Param('id') id: string,
   ) {
     return this.certificatesService.update(+id, updateCertificateDto);
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @Serialize(CertificateResponseDto)
+  async getAll(@Query() query: SearchCertificatesQueryDto) {
+    return this.certificatesService.getAllByUserId(query);
+  }
+
   @Get(':id')
-  @UseGuards(JwtAuthGuard, IsMeGuard)
-  get(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  async get(@Param('id') id: string) {
     return this.certificatesService.get(+id);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, IsMeGuard)
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  async remove(@Param('id') id: string) {
     return this.certificatesService.remove(+id);
   }
 
