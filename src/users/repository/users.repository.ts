@@ -73,13 +73,24 @@ export class UsersRepository {
     return Array.isArray(filterObject) ? { OR: filterObject } : filterObject;
   }
 
+  private prepareUserRoleFilter(user: User) {
+    switch (user.role) {
+      case Role.ADMIN:
+        return {
+          OR: [{ role: Role.USER }, { role: Role.ADMIN }],
+        };
+      default:
+        return { role: Role.USER };
+    }
+  }
+
   private prepareFindQuery(query: FindUserDto, user: User) {
     const take = query.limit ? Number(query.limit) : 10;
     const skip = query.page ? Number(query.page) * take : 0;
     const orderBy = this.prepareOrderBy(query.sort, query.dir);
     const filter = this.prepareFilter(query.filter);
     const where = {
-      ...(user.role !== Role.ADMIN && { role: Role.USER }),
+      ...this.prepareUserRoleFilter(user),
       ...(user.role !== Role.ADMIN && { active: true }),
       ...(filter && { ...filter }),
     };
@@ -110,14 +121,7 @@ export class UsersRepository {
   async findOne(
     id: number,
   ): Promise<
-    Omit<
-      User,
-      | 'password'
-      | 'createdAt'
-      | 'updatedAt'
-      | 'userAttributesId'
-      | 'organisationAttributesId'
-    >
+    Omit<User, 'password' | 'userAttributesId' | 'organisationAttributesId'>
   > {
     const user = await this.prismaService.user.findUnique({
       where: { id },
@@ -129,6 +133,8 @@ export class UsersRepository {
         email: true,
         active: true,
         profilePhotoKey: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
