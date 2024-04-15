@@ -73,9 +73,11 @@ export class UsersRepository {
     return Array.isArray(filterObject) ? { OR: filterObject } : filterObject;
   }
 
-  private prepareUserRoleFilter(user: User) {
+  private prepareUserRoleFilter(user: User, type?: Omit<Role, 'ADMIN'>) {
     switch (user.role) {
       case Role.ADMIN:
+        if (type === Role.ORGANISATION) return { role: Role.ORGANISATION };
+
         return {
           OR: [{ role: Role.USER }, { role: Role.ADMIN }],
         };
@@ -90,7 +92,7 @@ export class UsersRepository {
     const orderBy = this.prepareOrderBy(query.sort, query.dir);
     const filter = this.prepareFilter(query.filter);
     const where = {
-      ...this.prepareUserRoleFilter(user),
+      ...this.prepareUserRoleFilter(user, query.type),
       ...(user.role !== Role.ADMIN && { active: true }),
       ...(filter && { ...filter }),
     };
