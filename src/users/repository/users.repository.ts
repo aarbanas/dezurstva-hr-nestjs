@@ -112,7 +112,10 @@ export class UsersRepository {
         skip,
         take,
         where,
-        include: { userAttributes: true },
+        include: {
+          userAttributes: query.type === Role.USER,
+          organisationAttributes: query.type === Role.ORGANISATION,
+        },
         ...(orderBy && { orderBy }),
       }),
     ]);
