@@ -3,11 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { CertificateType } from '@prisma/client';
 
 export class CreateCertificateDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  userId: number;
-
-  @ApiProperty()
+  @ApiProperty({
+    enum: CertificateType,
+  })
   @IsEnum(CertificateType)
   type: CertificateType;
 

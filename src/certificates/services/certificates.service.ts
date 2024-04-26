@@ -2,8 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { S3Service } from '../../storage/s3.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MissingCertificateError } from '../certificate.errors';
 import {
+  CertificateAlreadyExistsError,
+  MissingCertificateError,
+} from '../certificate.errors';
+import {
+  CertificateResponseDto,
   CreateCertificateDto,
   SearchCertificatesQueryDto,
   UpdateCertificateDto,
@@ -22,10 +26,12 @@ export class CertificatesService {
     });
   }
 
-  async getAllByUserId(query: SearchCertificatesQueryDto) {
+  async getAllByUserId(
+    query: SearchCertificatesQueryDto,
+  ): Promise<CertificateResponseDto[]> {
     const { userId } = query;
 
-    return this.prismaService.certificate.findMany({
+    const certificates = await this.prismaService.certificate.findMany({
       where: {
         userAttribute: {
           User: {
@@ -34,14 +40,32 @@ export class CertificatesService {
         },
       },
     });
+
+    return certificates.map((certificate) => ({
+      id: certificate.id,
+      key: certificate.key,
+      type: certificate.type,
+      validTill: certificate.validTill,
+    }));
   }
 
-  async create(createCertificateDto: CreateCertificateDto) {
+  async create(userId: number, createCertificateDto: CreateCertificateDto) {
     const user = await this.prismaService.user.findUnique({
-      where: { id: createCertificateDto.userId },
+      where: { id: userId },
     });
 
     if (!user?.userAttributesId) throw new NotFoundException();
+
+    const existingCertificate = await this.prismaService.certificate.findFirst({
+      where: {
+        type: createCertificateDto.type,
+        userAttributeId: user?.userAttributesId,
+      },
+    });
+
+    if (existingCertificate) {
+      throw new CertificateAlreadyExistsError();
+    }
 
     return this.prismaService.certificate.create({
       data: {

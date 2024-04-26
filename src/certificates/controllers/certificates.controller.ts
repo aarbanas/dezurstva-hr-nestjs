@@ -12,8 +12,10 @@ import {
   FileTypeValidator,
   Patch,
   UseGuards,
-  ForbiddenException,
   Query,
+  ParseIntPipe,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -29,9 +31,10 @@ import RoleGuard from '../../auth/guards/role.guard';
 import { User } from '../../decorators/user.decorator';
 import { IsMeGuard } from '../../auth/guards/is-me.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { Serialize } from 'src/interceptors/serialize.interceptor';
+import { Serialize } from '../../interceptors/serialize.interceptor';
 import { CertificatesService } from '../services/certificates.service';
 import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
+import { Response } from 'express';
 
 const FILE_SIZE = 3 * 1000 * 1000;
 @Controller('certificates')
@@ -46,18 +49,16 @@ export class CertificatesController {
     @Body() createCertificateDto: CreateCertificateDto,
     @User() user: SessionUser,
   ) {
-    if (user.id !== createCertificateDto.userId) throw new ForbiddenException();
-
-    return this.certificatesService.create(createCertificateDto);
+    return this.certificatesService.create(user.id, createCertificateDto);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   async update(
     @Body() updateCertificateDto: UpdateCertificateDto,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.certificatesService.update(+id, updateCertificateDto);
+    return this.certificatesService.update(id, updateCertificateDto);
   }
 
   @Get()
@@ -69,14 +70,14 @@ export class CertificatesController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async get(@Param('id') id: string) {
-    return this.certificatesService.get(+id);
+  async get(@Param('id', ParseIntPipe) id: number) {
+    return this.certificatesService.get(id);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id') id: string) {
-    return this.certificatesService.remove(+id);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return this.certificatesService.remove(id);
   }
 
   @Post('upload')
@@ -114,8 +115,8 @@ export class CertificatesController {
 
   @Get('download/:id')
   @UseGuards(JwtAuthGuard)
-  download(@Param('id') id: string) {
-    return this.certificatesService.getFile(+id);
+  async download(@Param('id', ParseIntPipe) id: number) {
+    return this.certificatesService.getFile(id);
   }
 
   @Delete('delete/:id')
