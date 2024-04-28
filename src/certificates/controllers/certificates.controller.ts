@@ -14,8 +14,6 @@ import {
   UseGuards,
   Query,
   ParseIntPipe,
-  Res,
-  StreamableFile,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -34,7 +32,6 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Serialize } from '../../interceptors/serialize.interceptor';
 import { CertificatesService } from '../services/certificates.service';
 import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
-import { Response } from 'express';
 
 const FILE_SIZE = 3 * 1000 * 1000;
 @Controller('certificates')
