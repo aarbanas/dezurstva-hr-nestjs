@@ -26,7 +26,7 @@ export class CertificatesService {
     });
   }
 
-  async getAllByUserId(
+  async search(
     query: SearchCertificatesQueryDto,
   ): Promise<CertificateResponseDto[]> {
     const { userId } = query;
@@ -41,12 +41,7 @@ export class CertificatesService {
       },
     });
 
-    return certificates.map((certificate) => ({
-      id: certificate.id,
-      key: certificate.key,
-      type: certificate.type,
-      validTill: certificate.validTill,
-    }));
+    return certificates;
   }
 
   async create(userId: number, createCertificateDto: CreateCertificateDto) {
@@ -92,30 +87,5 @@ export class CertificatesService {
     if (certificate.key) await this.s3Service.deleteOne(certificate.key);
 
     return this.prismaService.certificate.delete({ where: { id } });
-  }
-
-  upload(file: Express.Multer.File, userId: string) {
-    const key = `documents/${userId}/${file.originalname}`;
-
-    return this.s3Service.upload(file.buffer, key, { mimetype: file.mimetype });
-  }
-
-  async getFile(id: number) {
-    const { key } =
-      (await this.prismaService.certificate.findFirst({
-        where: { id },
-      })) || {};
-    if (!key) throw new MissingCertificateError();
-    return this.s3Service.get(key);
-  }
-
-  async deleteFile(id: number) {
-    const { key } =
-      (await this.prismaService.certificate.findFirst({
-        where: { id },
-      })) || {};
-    if (!key) throw new MissingCertificateError();
-
-    return this.s3Service.deleteOne(key);
   }
 }

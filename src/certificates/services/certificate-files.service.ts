@@ -10,10 +10,15 @@ import {
 import { S3Service } from '../../storage/s3.service';
 import { CERTIFICATE_STORAGE_KEY } from '../constants';
 import { resolveContentType } from '../../common/helpers';
+import { PrismaService } from '../../prisma/prisma.service';
+import { MissingCertificateError } from '../certificate.errors';
 
 @Injectable()
 export class CertificateFilesService {
-  constructor(private readonly s3Service: S3Service) {}
+  constructor(
+    private prismaService: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async createUploadURL(
     data: CreateCertificateUploadURLDto,
@@ -36,6 +41,18 @@ export class CertificateFilesService {
 
   async deleteCertificateFromStorage(certificateKey: string): Promise<void> {
     await this.s3Service.deleteOne(certificateKey);
+  }
+
+  async download(id: number): Promise<string> {
+    const certificate = await this.prismaService.certificate.findFirst({
+      where: { id },
+    });
+
+    if (!certificate) {
+      throw new MissingCertificateError();
+    }
+
+    return this.s3Service.get(certificate.key);
   }
 
   private generateCertificateKey(fileExtension: string): string {

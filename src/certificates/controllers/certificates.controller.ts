@@ -5,19 +5,13 @@ import {
   Body,
   Param,
   Delete,
-  UseInterceptors,
-  UploadedFile,
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
   Patch,
   UseGuards,
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import {
   CreateCertificateDto,
@@ -27,13 +21,11 @@ import {
 } from '../dto';
 import RoleGuard from '../../auth/guards/role.guard';
 import { User } from '../../decorators/user.decorator';
-import { IsMeGuard } from '../../auth/guards/is-me.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Serialize } from '../../interceptors/serialize.interceptor';
 import { CertificatesService } from '../services/certificates.service';
 import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
 
-const FILE_SIZE = 3 * 1000 * 1000;
 @Controller('certificates')
 @ApiTags('certificates')
 @ApiBearerAuth()
@@ -62,7 +54,7 @@ export class CertificatesController {
   @UseGuards(JwtAuthGuard)
   @Serialize(CertificateResponseDto)
   async getAll(@Query() query: SearchCertificatesQueryDto) {
-    return this.certificatesService.getAllByUserId(query);
+    return this.certificatesService.search(query);
   }
 
   @Get(':id')
@@ -75,50 +67,5 @@ export class CertificatesController {
   @UseGuards(JwtAuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.certificatesService.remove(id);
-  }
-
-  @Post('upload')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-  })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file'))
-  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN, Role.USER]))
-  upload(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: FILE_SIZE,
-            message: 'Max file size is 3MB',
-          }),
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|pdf)$/ }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
-    @User() user: SessionUser,
-  ) {
-    return this.certificatesService.upload(file, user.id.toString());
-  }
-
-  @Get('download/:id')
-  @UseGuards(JwtAuthGuard)
-  async download(@Param('id', ParseIntPipe) id: number) {
-    return this.certificatesService.getFile(id);
-  }
-
-  @Delete('delete/:id')
-  @UseGuards(JwtAuthGuard, IsMeGuard)
-  removeFile(@Param('id') id: string) {
-    return this.certificatesService.deleteFile(+id);
   }
 }
