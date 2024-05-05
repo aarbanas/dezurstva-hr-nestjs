@@ -32,7 +32,29 @@ export class UsersService {
 
   async find(query: FindUserDto, user: User) {
     try {
-      return await this.usersRepository.find(query, user);
+      const { data: users, meta } = await this.usersRepository.find(
+        query,
+        user,
+      );
+
+      const usersWithProfilePhotos = await Promise.all(
+        users.map(async (user) => {
+          let profilePhoto: string | null = null;
+          if (user.profilePhotoKey) {
+            profilePhoto = await this.s3Service.get(user.profilePhotoKey);
+          }
+
+          return {
+            ...user,
+            profilePhoto,
+          };
+        }),
+      );
+
+      return {
+        meta,
+        data: usersWithProfilePhotos,
+      };
     } catch (e) {
       throw new NotFoundException();
     }
