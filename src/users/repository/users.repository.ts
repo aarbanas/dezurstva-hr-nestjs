@@ -131,7 +131,11 @@ export class UsersRepository {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       select: {
-        userAttributes: true,
+        userAttributes: {
+          include: {
+            certificates: true,
+          },
+        },
         organisationAttributes: true,
         id: true,
         role: true,

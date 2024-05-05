@@ -14,6 +14,7 @@ import {
   MaxFileSizeValidator,
   UploadedFile,
   ParseFilePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Role, User as UserModel } from '@prisma/client';
 import { UsersService } from './users.service';
@@ -79,8 +80,8 @@ export class UsersController {
   @Get(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.findOne(id);
   }
 
   @Patch(':id')
