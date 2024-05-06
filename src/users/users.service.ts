@@ -2,6 +2,7 @@ import { User } from '@prisma/client';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { FindUserDto } from './dto/find-user.dto';
+import { S3Service } from '../storage/s3.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,7 +10,6 @@ import { BcryptService } from '../service/bcrypt.service';
 import { ICreateStrategy } from './create-strategy/icreate.strategy';
 import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 import { UsersRepository } from './repository/users.repository';
-import { S3Service } from '../service/s3.service';
 import { extname } from 'path';
 import { createHash } from 'crypto';
 
@@ -32,7 +32,29 @@ export class UsersService {
 
   async find(query: FindUserDto, user: User) {
     try {
-      return await this.usersRepository.find(query, user);
+      const { data: users, meta } = await this.usersRepository.find(
+        query,
+        user,
+      );
+
+      const usersWithProfilePhotos = await Promise.all(
+        users.map(async (user) => {
+          let profilePhoto: string | null = null;
+          if (user.profilePhotoKey) {
+            profilePhoto = await this.s3Service.get(user.profilePhotoKey);
+          }
+
+          return {
+            ...user,
+            profilePhoto,
+          };
+        }),
+      );
+
+      return {
+        meta,
+        data: usersWithProfilePhotos,
+      };
     } catch (e) {
       throw new NotFoundException();
     }
