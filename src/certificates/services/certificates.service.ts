@@ -1,9 +1,17 @@
-import { S3Service } from '../service/s3.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { MissingCertificateError } from './certificate.errors';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
-import { UpdateCertificateDto } from './dto/update-certificate.dto';
+
+import { S3Service } from '../../storage/s3.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  CertificateAlreadyExistsError,
+  MissingCertificateError,
+} from '../certificate.errors';
+import {
+  CertificateResponseDto,
+  CreateCertificateDto,
+  SearchCertificatesQueryDto,
+  UpdateCertificateDto,
+} from '../dto';
 
 @Injectable()
 export class CertificatesService {
@@ -18,11 +26,41 @@ export class CertificatesService {
     });
   }
 
-  async create(createCertificateDto: CreateCertificateDto) {
-    const user = await this.prismaService.user.findUnique({
-      where: { id: createCertificateDto.userId },
+  async search(
+    query: SearchCertificatesQueryDto,
+  ): Promise<CertificateResponseDto[]> {
+    const { userId } = query;
+
+    const certificates = await this.prismaService.certificate.findMany({
+      where: {
+        userAttribute: {
+          User: {
+            id: userId,
+          },
+        },
+      },
     });
+
+    return certificates;
+  }
+
+  async create(userId: number, createCertificateDto: CreateCertificateDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+
     if (!user?.userAttributesId) throw new NotFoundException();
+
+    const existingCertificate = await this.prismaService.certificate.findFirst({
+      where: {
+        type: createCertificateDto.type,
+        userAttributeId: user?.userAttributesId,
+      },
+    });
+
+    if (existingCertificate) {
+      throw new CertificateAlreadyExistsError();
+    }
 
     return this.prismaService.certificate.create({
       data: {
@@ -49,28 +87,5 @@ export class CertificatesService {
     if (certificate.key) await this.s3Service.deleteOne(certificate.key);
 
     return this.prismaService.certificate.delete({ where: { id } });
-  }
-
-  upload(file: Express.Multer.File, userId: string) {
-    return this.s3Service.upload(file, userId);
-  }
-
-  async getFile(id: number) {
-    const { key } =
-      (await this.prismaService.certificate.findFirst({
-        where: { id },
-      })) || {};
-    if (!key) throw new MissingCertificateError();
-    return this.s3Service.get(key);
-  }
-
-  async deleteFile(id: number) {
-    const { key } =
-      (await this.prismaService.certificate.findFirst({
-        where: { id },
-      })) || {};
-    if (!key) throw new MissingCertificateError();
-
-    return this.s3Service.deleteOne(key);
   }
 }

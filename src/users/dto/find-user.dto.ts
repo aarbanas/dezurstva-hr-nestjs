@@ -1,4 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
+import { IsIn } from 'class-validator';
 
 export class FindUserDto {
   @ApiPropertyOptional()
@@ -12,4 +14,10 @@ export class FindUserDto {
 
   @ApiPropertyOptional()
   dir: string;
+
+  @ApiPropertyOptional()
+  filter: object;
+
+  @IsIn(['USER', 'ORGANISATION'])
+  type: Omit<Role, 'ADMIN'>;
 }
