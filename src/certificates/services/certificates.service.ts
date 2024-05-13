@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
-import { S3Service } from '../../storage/s3.service';
+import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
 import { PrismaService } from '../../prisma/prisma.service';
+import { S3Service } from '../../storage/s3.service';
 import {
   CertificateAlreadyExistsError,
   MissingCertificateError,
@@ -72,20 +77,40 @@ export class CertificatesService {
     });
   }
 
-  update(id: number, updateCertificateDto: UpdateCertificateDto) {
+  async update(id: number, updateCertificateDto: UpdateCertificateDto) {
     return this.prismaService.certificate.update({
       where: { id },
       data: updateCertificateDto,
     });
   }
 
-  async remove(id: number) {
+  async remove(user: SessionUser, id: number): Promise<void> {
     const certificate = await this.prismaService.certificate.findFirst({
       where: { id },
+      include: {
+        userAttribute: {
+          select: {
+            User: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
+
     if (!certificate) throw new MissingCertificateError();
+
+    if (
+      user.id !== certificate?.userAttribute?.User?.id &&
+      user.role !== 'ADMIN'
+    ) {
+      throw new ForbiddenException();
+    }
+
     if (certificate.key) await this.s3Service.deleteOne(certificate.key);
 
-    return this.prismaService.certificate.delete({ where: { id } });
+    await this.prismaService.certificate.delete({ where: { id } });
   }
 }

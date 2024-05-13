@@ -11,13 +11,14 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import {
   CreateCertificateDto,
   UpdateCertificateDto,
   CertificateResponseDto,
   SearchCertificatesQueryDto,
+  CreateCertificateOnBehalfOfDto,
 } from '../dto';
 import RoleGuard from '../../auth/guards/role.guard';
 import { User } from '../../decorators/user.decorator';
@@ -32,13 +33,25 @@ import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
 export class CertificatesController {
   constructor(private readonly certificatesService: CertificatesService) {}
 
+  @ApiOperation({
+    summary: 'Create a certificate entry',
+  })
   @Post()
-  @UseGuards(JwtAuthGuard, RoleGuard([Role.USER, Role.ADMIN]))
+  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN]))
   async create(
     @Body() createCertificateDto: CreateCertificateDto,
     @User() user: SessionUser,
   ) {
     return this.certificatesService.create(user.id, createCertificateDto);
+  }
+
+  @ApiOperation({
+    summary: 'Create a certificate entry on behalf of a user',
+  })
+  @Post('create-on-behalf-of')
+  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN]))
+  async createOnBehalfOf(@Body() body: CreateCertificateOnBehalfOfDto) {
+    return this.certificatesService.create(body.userId, body);
   }
 
   @Patch(':id')
@@ -65,7 +78,10 @@ export class CertificatesController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.certificatesService.remove(id);
+  async remove(
+    @User() user: SessionUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.certificatesService.remove(user, id);
   }
 }
