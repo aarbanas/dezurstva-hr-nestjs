@@ -12,6 +12,8 @@ import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 import { UsersRepository } from './repository/users.repository';
 import { extname } from 'path';
 import { createHash } from 'crypto';
+import axios from 'axios';
+import * as process from 'node:process';
 
 @Injectable()
 export class UsersService {
@@ -23,6 +25,12 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto, strategy: ICreateStrategy) {
+    // Validate ReCaptcha
+    const isHuman = await this.validateReCaptcha(createUserDto.reCaptchaToken);
+    if (!isHuman) {
+      throw new Error('You are a robot');
+    }
+
     const password = await this.bcryptService.hashPassword(
       createUserDto.password,
     );
@@ -118,5 +126,18 @@ export class UsersService {
     return {
       profilePhoto,
     };
+  }
+
+  private async validateReCaptcha(token: string): Promise<boolean> {
+    const BASE_URL = 'https://www.google.com/recaptcha/api/siteverify';
+    const res = await axios.post<{
+      success: boolean;
+      challenge_ts: string;
+      hostname: string;
+    }>(
+      `${BASE_URL}?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+    );
+
+    return res.data.success;
   }
 }

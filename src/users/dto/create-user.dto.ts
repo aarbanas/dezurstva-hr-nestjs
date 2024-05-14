@@ -28,6 +28,11 @@ export class CreateUserDto {
   city: string;
 
   @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  reCaptchaToken: string;
+
+  @ApiProperty()
   @ValidateIf((object) => object.role === Role.USER)
   @IsNotEmpty()
   @IsString()
