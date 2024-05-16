@@ -1,5 +1,9 @@
 import { User } from '@prisma/client';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { FindUserDto } from './dto/find-user.dto';
 import { S3Service } from '../storage/s3.service';
@@ -28,7 +32,7 @@ export class UsersService {
     // Validate ReCaptcha
     const isHuman = await this.validateReCaptcha(createUserDto.reCaptchaToken);
     if (!isHuman) {
-      throw new Error('You are a robot');
+      throw new ForbiddenException('You are a robot');
     }
 
     const password = await this.bcryptService.hashPassword(
