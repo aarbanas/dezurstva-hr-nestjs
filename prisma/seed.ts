@@ -50,10 +50,14 @@ async function main() {
       },
     });
 
+    const userPwd = await bcrypt.hash(
+      Math.random().toString(36).slice(-8),
+      saltOrRounds,
+    );
     await prisma.user.create({
       data: {
         email: `test_${i + 1}@test.com`,
-        password: Math.random().toString(36).slice(-8),
+        password: userPwd,
         role: 'USER',
         active: true,
         userAttributesId: _userAttr.id,
