@@ -9,8 +9,11 @@ export class CertificateResponseDto {
   type: CertificateType;
 
   @Expose()
-  validTill: Date;
+  validTill?: Date | null;
 
   @Expose()
   key: string;
+
+  @Expose()
+  active: boolean;
 }
