@@ -24,6 +24,7 @@ model User {
   organisationAttributes     OrganisationAttributes? @relation(fields: [organisationAttributesId], references: [id], onDelete: Cascade)
   organisationAttributesId   Int?                    @unique
   profilePhotoKey            String?
+  Subscription               Subscription[]
 }
 
 model UserAttributes {
@@ -56,6 +57,16 @@ model Certificate {
   updatedAt       DateTime        @updatedAt
   userAttribute   UserAttributes? @relation(fields: [userAttributeId], references: [id], onDelete: Cascade)
   userAttributeId Int?
+}
+
+model Subscription {
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  active     Boolean   @default(true)
+  activeTill DateTime?
+  User       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int?
 }
 
 enum Role {
