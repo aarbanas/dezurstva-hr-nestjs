@@ -7,12 +7,6 @@
 -- AlterEnum
 ALTER TYPE "CertificateType" ADD VALUE 'ID';
 
--- DropForeignKey
-ALTER TABLE "Subscription" DROP CONSTRAINT "Subscription_userId_fkey";
-
 -- AlterTable
 ALTER TABLE "Certificate" ADD COLUMN     "active" BOOLEAN NOT NULL DEFAULT false,
 ALTER COLUMN "validTill" DROP NOT NULL;
-
--- DropTable
-DROP TABLE "Subscription";
