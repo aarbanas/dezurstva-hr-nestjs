@@ -48,8 +48,9 @@ model OrganisationAttributes {
 model Certificate {
   id              Int             @id @default(autoincrement())
   type            CertificateType
-  validTill       DateTime
+  validTill       DateTime?
   key             String
+  active          Boolean         @default(false)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   userAttribute   UserAttributes? @relation(fields: [userAttributeId], references: [id], onDelete: Cascade)
@@ -71,4 +72,5 @@ enum UserType {
 enum CertificateType {
   UNIVERSITY
   REDCROSS
+  ID
 }

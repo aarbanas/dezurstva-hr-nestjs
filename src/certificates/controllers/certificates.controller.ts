@@ -24,7 +24,7 @@ import RoleGuard from '../../auth/guards/role.guard';
 import { User } from '../../decorators/user.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Serialize } from '../../interceptors/serialize.interceptor';
-import { CertificatesService } from '../services/certificates.service';
+import { CertificatesService } from '../services';
 import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
 
 @Controller('certificates')
@@ -37,7 +37,7 @@ export class CertificatesController {
     summary: 'Create a certificate entry',
   })
   @Post()
-  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN]))
+  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN, Role.USER]))
   async create(
     @Body() createCertificateDto: CreateCertificateDto,
     @User() user: SessionUser,

@@ -10,7 +10,6 @@ export class CreateCertificateDto {
   type: CertificateType;
 
   @ApiProperty()
-  @IsNotEmpty()
   validTill: string;
 
   @ApiProperty()
