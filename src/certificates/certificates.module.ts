@@ -6,12 +6,11 @@ import {
 import { TasksService } from './services';
 import { PrismaModule } from '../prisma/prisma.module';
 import { StorageModule } from '../storage/storage.module';
-import { ScheduleModule } from '@nestjs/schedule';
 import { CertificatesService, CertificateFilesService } from './services';
 
 @Module({
   controllers: [CertificatesController, CertificateFilesController],
   providers: [CertificatesService, CertificateFilesService, TasksService],
-  imports: [PrismaModule, StorageModule, ScheduleModule.forRoot()],
+  imports: [PrismaModule, StorageModule],
 })
 export class CertificatesModule {}
