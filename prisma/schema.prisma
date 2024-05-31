@@ -16,6 +16,7 @@ model User {
   password                 String
   role                     Role
   active                   Boolean                 @default(false)
+  termsAndConditions       Boolean                 @default(false)
   createdAt                DateTime                @default(now())
   updatedAt                DateTime                @updatedAt
   userAttributes           UserAttributes?         @relation(fields: [userAttributesId], references: [id], onDelete: Cascade)
