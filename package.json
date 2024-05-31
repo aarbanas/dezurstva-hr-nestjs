@@ -24,6 +24,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:postinstall": "prisma generate",
     "commit": "cz",
     "prepare": "husky install"
   },
