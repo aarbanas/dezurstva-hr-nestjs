@@ -1,6 +1,7 @@
 import { Role, UserType } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -31,6 +32,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   reCaptchaToken: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsBoolean()
+  termsAndConditions: boolean;
 
   @ApiProperty()
   @ValidateIf((object) => object.role === Role.USER)

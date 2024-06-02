@@ -144,6 +144,7 @@ export class UsersRepository {
         profilePhotoKey: true,
         createdAt: true,
         updatedAt: true,
+        termsAndConditionsAccepted: true,
       },
     });
 

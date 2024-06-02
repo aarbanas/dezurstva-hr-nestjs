@@ -26,6 +26,7 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
           password: createUserDto.password,
           role: createUserDto.role,
           organisationAttributesId: _organisationAttributes.id,
+          termsAndConditionsAccepted: createUserDto.termsAndConditions,
         },
       });
     });
