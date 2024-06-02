@@ -29,7 +29,7 @@ export class CreateUserStrategy implements ICreateStrategy {
           password: createUserDto.password,
           role: createUserDto.role,
           userAttributesId: _userAttributes.id,
-          termsAndConditions: createUserDto.termsAndConditions,
+          termsAndConditionsAccepted: createUserDto.termsAndConditions,
         },
       });
     });

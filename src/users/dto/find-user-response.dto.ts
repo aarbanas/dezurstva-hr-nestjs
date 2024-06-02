@@ -15,7 +15,7 @@ export class UserResponseDto {
   active: boolean;
 
   @Expose()
-  termsAndConditions: boolean;
+  termsAndConditionsAccepted: boolean;
 
   @Expose()
   @Type(() => UserAttributesDTO)
