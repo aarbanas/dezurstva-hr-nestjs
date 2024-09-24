@@ -6,17 +6,8 @@ import { ConfigService } from '@nestjs/config';
 export class EmailService {
   readonly #emailAddress: string;
   constructor(private readonly configService: ConfigService) {
-    const sendgridApiKey = this.configService.get('SENDGRID_API_KEY');
-    const email = this.configService.get('EMAIL_ADDRESS');
-    if (!sendgridApiKey) {
-      throw new Error('SENDGRID_API_KEY not found in environment variables');
-    }
-    if (!email) {
-      throw new Error('EMAIL_ADDRESS not found in environment variables');
-    }
-
-    sendgrid.setApiKey(sendgridApiKey);
-    this.#emailAddress = email;
+    sendgrid.setApiKey(this.configService.getOrThrow('SENDGRID_API_KEY'));
+    this.#emailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
   }
 
   async sendEmail(email: string, subject: string, content: string) {
