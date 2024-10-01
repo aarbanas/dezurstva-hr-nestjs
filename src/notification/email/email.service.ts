@@ -22,6 +22,7 @@ export class EmailService {
     try {
       await sendgrid.send(msg);
     } catch (e) {
+      this.#logger.error(e);
       throw new BadRequestException();
     }
   }
