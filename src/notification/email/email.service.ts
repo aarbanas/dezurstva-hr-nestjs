@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailService {
+  readonly #logger = new Logger(EmailService.name);
   readonly #emailAddress: string;
   constructor(private readonly configService: ConfigService) {
     sendgrid.setApiKey(this.configService.getOrThrow('SENDGRID_API_KEY'));
