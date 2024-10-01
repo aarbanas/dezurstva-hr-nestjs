@@ -10,6 +10,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    // Add custom validation https://docs.nestjs.com/techniques/configuration#custom-validate-function
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     UsersModule,

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as sendgrid from '@sendgrid/mail';
 import { ConfigService } from '@nestjs/config';
 
