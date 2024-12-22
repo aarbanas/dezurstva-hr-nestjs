@@ -95,9 +95,9 @@ export class UsersService {
     }
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto, user: User) {
     try {
-      return await this.usersRepository.update(id, updateUserDto);
+      return await this.usersRepository.update(id, updateUserDto, user);
     } catch (e) {
       throw new NotFoundException();
     }

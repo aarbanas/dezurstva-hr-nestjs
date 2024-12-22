@@ -3,9 +3,13 @@ import { User, UserAttributes } from '@prisma/client';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ICreateStrategy } from './icreate.strategy';
+import { EmailService } from '../../notification/email/email.service';
 
 export class CreateUserStrategy implements ICreateStrategy {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
   async create(
     createUserDto: CreateUserDto,
   ): Promise<Omit<User, 'password'> | undefined> {
@@ -16,7 +20,7 @@ export class CreateUserStrategy implements ICreateStrategy {
       phone: createUserDto.phone!,
       type: createUserDto.type!,
     };
-    return this.prismaService.$transaction(async (tx) => {
+    const user = await this.prismaService.$transaction(async (tx) => {
       // 1. Create user attributes
       const _userAttributes = await tx.userAttributes.create({
         data: userAttributes,
@@ -33,5 +37,23 @@ export class CreateUserStrategy implements ICreateStrategy {
         },
       });
     });
+
+    const template = this.emailService.generateTemplate(
+      {
+        appName: 'Dežurstva',
+        userEmail: user.email,
+        link: 'https://dezurstva.com/profile/certificates',
+        year: new Date().getFullYear(),
+      },
+      'USER_REGISTER',
+    );
+
+    await this.emailService.sendEmail(
+      'dezurstva.com@gmail.com',
+      'Uspješna registracija',
+      template,
+    );
+
+    return user;
   }
 }

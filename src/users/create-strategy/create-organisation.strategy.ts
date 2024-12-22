@@ -3,9 +3,13 @@ import { ICreateStrategy } from './icreate.strategy';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrganisationAttributes, User } from '@prisma/client';
+import { EmailService } from '../../notification/email/email.service';
 
 export class CreateOrganisationStrategy implements ICreateStrategy {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
   async create(
     createUserDto: CreateUserDto,
   ): Promise<Omit<User, 'password'> | undefined> {
@@ -15,7 +19,7 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
       oib: createUserDto.oib!,
       street: createUserDto.street!,
     };
-    return this.prismaService.$transaction(async (tx) => {
+    const org = await this.prismaService.$transaction(async (tx) => {
       const _organisationAttributes = await tx.organisationAttributes.create({
         data: organisationAttributes,
       });
@@ -30,5 +34,23 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
         },
       });
     });
+
+    const template = this.emailService.generateTemplate(
+      {
+        appName: 'Dežurstva',
+        userEmail: org.email,
+        link: 'https://dezurstva.com/profile/certificates',
+        year: new Date().getFullYear(),
+      },
+      'ORGANISATION_REGISTER',
+    );
+
+    await this.emailService.sendEmail(
+      'dezurstva.com@gmail.com',
+      'Uspješna registracija',
+      template,
+    );
+
+    return org;
   }
 }
