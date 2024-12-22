@@ -17,12 +17,14 @@ import {
   SearchCertificatesQueryDto,
   UpdateCertificateDto,
 } from '../dto';
+import { EmailService } from '../../notification/email/email.service';
 
 @Injectable()
 export class CertificatesService {
   constructor(
     private prismaService: PrismaService,
     private s3Service: S3Service,
+    private readonly emailService: EmailService,
   ) {}
 
   get(id: number) {
@@ -67,7 +69,7 @@ export class CertificatesService {
       throw new CertificateAlreadyExistsError();
     }
 
-    return this.prismaService.certificate.create({
+    const result = await this.prismaService.certificate.create({
       data: {
         key: createCertificateDto.key,
         type: createCertificateDto.type,
@@ -75,6 +77,24 @@ export class CertificatesService {
         userAttributeId: user.userAttributesId,
       },
     });
+
+    const template = this.emailService.generateTemplate(
+      {
+        appName: 'Dežurstva',
+        userEmail: user.email,
+        link: 'https://dezurstva.com/profile/certificates',
+        year: new Date().getFullYear(),
+      },
+      'ADMIN_USER_UPLOAD_CERTIFICATE',
+    );
+
+    await this.emailService.sendEmail(
+      user.email,
+      'Uspješna registracija',
+      template,
+    );
+
+    return result;
   }
 
   async update(id: number, updateCertificateDto: UpdateCertificateDto) {
