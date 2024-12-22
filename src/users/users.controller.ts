@@ -40,6 +40,7 @@ import { CreateOrganisationStrategy } from './create-strategy/create-organisatio
 import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 import { UserResponseDto } from './dto/find-user-response.dto';
 import { Serialize } from '../interceptors/serialize.interceptor';
+import { EmailService } from 'src/notification/email/email.service';
 
 const FILE_SIZE = 3 * 1000 * 1000;
 
@@ -48,7 +49,8 @@ const FILE_SIZE = 3 * 1000 * 1000;
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private prismaService: PrismaService,
+    private readonly prismaService: PrismaService,
+    private readonly emailService: EmailService,
   ) {}
 
   @Post()
@@ -58,12 +60,12 @@ export class UsersController {
       case 'USER':
         return this.usersService.create(
           createUserDto,
-          new CreateUserStrategy(this.prismaService),
+          new CreateUserStrategy(this.prismaService, this.emailService),
         );
       case 'ORGANISATION':
         return this.usersService.create(
           createUserDto,
-          new CreateOrganisationStrategy(this.prismaService),
+          new CreateOrganisationStrategy(this.prismaService, this.emailService),
         );
       default:
         throw new ForbiddenException();
@@ -88,8 +90,12 @@ export class UsersController {
   @Serialize(UserResponseDto)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, IsMeGuard)
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @User() user: UserModel,
+  ) {
+    return this.usersService.update(+id, updateUserDto, user);
   }
 
   @Delete(':id')
