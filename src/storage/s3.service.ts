@@ -94,7 +94,6 @@ export class S3Service {
       Bucket: this.bucket,
       Key: key,
       ContentType: contentType,
-      ACL: ObjectCannedACL.public_read_write,
     });
 
     return getSignedUrl(this.s3Client, command, {

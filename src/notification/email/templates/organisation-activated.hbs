@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="hr-HR">
+<head>
+  <meta charset="UTF-8">
+  <title>Uspješna aktivacija</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          background-color: #f4f4f4;
+          margin: 0;
+          padding: 0;
+      }
+      .email-container {
+          max-width: 600px;
+          margin: 0 auto;
+          background-color: #ffffff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .email-header {
+          text-align: center;
+          background-color: #FF5151FF;
+          color: #ffffff;
+          padding: 20px;
+          border-radius: 8px 8px 0 0;
+      }
+      .email-body {
+          padding: 20px;
+          color: #333333;
+      }
+      .email-body h1 {
+          color: #FF5151FF;
+      }
+      .email-footer {
+          text-align: center;
+          font-size: 12px;
+          color: #999999;
+          padding: 10px;
+      }
+      .cta-button {
+          background-color: #FF5151FF;
+          color: #ffffff;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 4px;
+          text-decoration: none;
+          font-size: 16px;
+      }
+  </style>
+</head>
+<body>
+<div class="email-container">
+  <div class="email-header">
+    <h1>Dobrodošli u {{appName}}!</h1>
+  </div>
+  <div class="email-body">
+    <p>Pozdrav {{userEmail}},</p>
+    <p>Vaš korisnički račun je aktiviran od strane naših administratora te sada možete početi koristiti našu aplikaciju.</p>
+    <p>Prijavi se u aplikaciju kroz niže naveden link:</p>
+    <p>
+      <a href="{{link}}" class="cta-button">Prijava</a>
+    </p>
+    <p>Lijepi pozdrav,<br>{{appName}}</p>
+  </div>
+  <div class="email-footer">
+    <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
+  </div>
+</div>
+</body>
+</html>
