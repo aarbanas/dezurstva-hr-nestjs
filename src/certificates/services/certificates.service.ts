@@ -17,13 +17,27 @@ import {
   SearchCertificatesQueryDto,
   UpdateCertificateDto,
 } from '../dto';
+import { EmailService } from '../../notification/email/email.service';
+import { UserRegisterTemplateData } from '../../notification/email/templates/types';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CertificatesService {
+  readonly #appName: string;
+  readonly #appUrl: string;
+  readonly #adminEmailAddress: string;
   constructor(
     private prismaService: PrismaService,
     private s3Service: S3Service,
-  ) {}
+    private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
+  ) {
+    this.#appName = this.configService.getOrThrow('APP_NAME');
+    this.#appUrl = this.configService.getOrThrow('APP_URL');
+    this.#adminEmailAddress = this.configService.getOrThrow(
+      'ADMIN_EMAIL_ADDRESS',
+    );
+  }
 
   get(id: number) {
     return this.prismaService.certificate.findFirst({
@@ -67,7 +81,7 @@ export class CertificatesService {
       throw new CertificateAlreadyExistsError();
     }
 
-    return this.prismaService.certificate.create({
+    const result = await this.prismaService.certificate.create({
       data: {
         key: createCertificateDto.key,
         type: createCertificateDto.type,
@@ -75,6 +89,25 @@ export class CertificatesService {
         userAttributeId: user.userAttributesId,
       },
     });
+
+    const template =
+      this.emailService.generateTemplate<UserRegisterTemplateData>(
+        {
+          appName: this.#appName,
+          userEmail: user.email,
+          link: `${this.#appUrl}/admin/users/profile/${userId}`,
+          year: new Date().getFullYear(),
+        },
+        'ADMIN_USER_UPLOAD_CERTIFICATE',
+      );
+
+    await this.emailService.sendEmail(
+      this.#adminEmailAddress,
+      'Novi certifikat dodan',
+      template,
+    );
+
+    return result;
   }
 
   async update(id: number, updateCertificateDto: UpdateCertificateDto) {

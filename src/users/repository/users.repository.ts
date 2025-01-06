@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { FindUserDto } from '../dto/find-user.dto';
 import { Role, User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -155,14 +159,16 @@ export class UsersRepository {
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.prismaService.user.findUnique({
-      where: { id },
-      select: { role: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException();
+  async update(
+    user: Pick<User, 'role' | 'active' | 'id'>,
+    updateUserDto: UpdateUserDto,
+    reqUser: User,
+  ) {
+    // Only admin can change active status
+    if (reqUser.role !== Role.ADMIN) {
+      if (user.active !== updateUserDto.active) {
+        throw new ForbiddenException();
+      }
     }
 
     const userData = { active: updateUserDto.active };
@@ -183,7 +189,7 @@ export class UsersRepository {
     };
 
     return this.prismaService.user.update({
-      where: { id },
+      where: { id: user.id },
       data: {
         ...userData,
         ...(user.role === Role.USER && {
