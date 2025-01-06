@@ -4,12 +4,20 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ICreateStrategy } from './icreate.strategy';
 import { EmailService } from '../../notification/email/email.service';
+import { ConfigService } from '@nestjs/config';
+import { UserRegisterTemplateData } from '../../notification/email/templates/types';
 
 export class CreateUserStrategy implements ICreateStrategy {
+  readonly #appName: string;
+  readonly #appUrl: string;
   constructor(
     private prismaService: PrismaService,
     private readonly emailService: EmailService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.#appName = this.configService.getOrThrow('APP_NAME');
+    this.#appUrl = this.configService.getOrThrow('APP_URL');
+  }
   async create(
     createUserDto: CreateUserDto,
   ): Promise<Omit<User, 'password'> | undefined> {
@@ -38,18 +46,19 @@ export class CreateUserStrategy implements ICreateStrategy {
       });
     });
 
-    const template = this.emailService.generateTemplate(
-      {
-        appName: 'Dežurstva',
-        userEmail: user.email,
-        link: 'https://dezurstva.com/profile/certificates',
-        year: new Date().getFullYear(),
-      },
-      'USER_REGISTER',
-    );
+    const template =
+      this.emailService.generateTemplate<UserRegisterTemplateData>(
+        {
+          appName: this.#appName,
+          userEmail: user.email,
+          link: `${this.#appUrl}/profile/certificates`,
+          year: new Date().getFullYear(),
+        },
+        'USER_REGISTER',
+      );
 
     await this.emailService.sendEmail(
-      'dezurstva.com@gmail.com',
+      user.email,
       'Uspješna registracija',
       template,
     );

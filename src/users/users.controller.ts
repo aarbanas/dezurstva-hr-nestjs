@@ -41,6 +41,7 @@ import { UploadProfilePhotoResponse } from './dto/upload-avatar-response.dto';
 import { UserResponseDto } from './dto/find-user-response.dto';
 import { Serialize } from '../interceptors/serialize.interceptor';
 import { EmailService } from 'src/notification/email/email.service';
+import { ConfigService } from '@nestjs/config';
 
 const FILE_SIZE = 3 * 1000 * 1000;
 
@@ -51,6 +52,7 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly prismaService: PrismaService,
     private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post()
@@ -60,12 +62,20 @@ export class UsersController {
       case 'USER':
         return this.usersService.create(
           createUserDto,
-          new CreateUserStrategy(this.prismaService, this.emailService),
+          new CreateUserStrategy(
+            this.prismaService,
+            this.emailService,
+            this.configService,
+          ),
         );
       case 'ORGANISATION':
         return this.usersService.create(
           createUserDto,
-          new CreateOrganisationStrategy(this.prismaService, this.emailService),
+          new CreateOrganisationStrategy(
+            this.prismaService,
+            this.emailService,
+            this.configService,
+          ),
         );
       default:
         throw new ForbiddenException();

@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import {
   ForbiddenException,
   Injectable,
@@ -18,15 +18,25 @@ import { extname } from 'path';
 import { createHash } from 'crypto';
 import axios from 'axios';
 import * as process from 'node:process';
+import { EmailService } from '../notification/email/email.service';
+import { ConfigService } from '@nestjs/config';
+import { UserRegisterTemplateData } from '../notification/email/templates/types';
 
 @Injectable()
 export class UsersService {
+  readonly #appName: string;
+  readonly #appUrl: string;
   constructor(
     private readonly prismaService: PrismaService,
     private readonly s3Service: S3Service,
     private readonly usersRepository: UsersRepository,
     private readonly bcryptService: BcryptService,
-  ) {}
+    private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
+  ) {
+    this.#appName = this.configService.getOrThrow('APP_NAME');
+    this.#appUrl = this.configService.getOrThrow('APP_URL');
+  }
 
   async create(createUserDto: CreateUserDto, strategy: ICreateStrategy) {
     // Validate ReCaptcha
@@ -95,9 +105,50 @@ export class UsersService {
     }
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto, user: User) {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+    user: User,
+  ): Promise<void> {
+    const existingUser = await this.prismaService.user.findUnique({
+      where: { id },
+      select: { id: true, role: true, active: true },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException();
+    }
+
     try {
-      return await this.usersRepository.update(id, updateUserDto, user);
+      const updatedUser = await this.usersRepository.update(
+        existingUser,
+        updateUserDto,
+        user,
+      );
+      // Check if the account was activated
+      if (
+        existingUser.role === Role.ORGANISATION &&
+        !existingUser.active &&
+        updatedUser.active
+      ) {
+        // Send activation email
+        const template =
+          this.emailService.generateTemplate<UserRegisterTemplateData>(
+            {
+              appName: this.#appName,
+              userEmail: updatedUser.email,
+              link: this.#appUrl,
+              year: new Date().getFullYear(),
+            },
+            'ORGANISATION_ACTIVATED',
+          );
+
+        await this.emailService.sendEmail(
+          updatedUser.email,
+          'Account activated',
+          template,
+        );
+      }
     } catch (e) {
       throw new NotFoundException();
     }

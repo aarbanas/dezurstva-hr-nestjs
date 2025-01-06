@@ -159,16 +159,11 @@ export class UsersRepository {
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto, reqUser: User) {
-    const user = await this.prismaService.user.findUnique({
-      where: { id },
-      select: { role: true, active: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException();
-    }
-
+  async update(
+    user: Pick<User, 'role' | 'active' | 'id'>,
+    updateUserDto: UpdateUserDto,
+    reqUser: User,
+  ) {
     // Only admin can change active status
     if (reqUser.role !== Role.ADMIN) {
       if (user.active !== updateUserDto.active) {
@@ -194,7 +189,7 @@ export class UsersRepository {
     };
 
     return this.prismaService.user.update({
-      where: { id },
+      where: { id: user.id },
       data: {
         ...userData,
         ...(user.role === Role.USER && {
