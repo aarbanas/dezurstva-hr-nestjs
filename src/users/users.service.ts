@@ -145,7 +145,7 @@ export class UsersService {
 
         await this.emailService.sendEmail(
           updatedUser.email,
-          'Account activated',
+          'Korisnički račun aktiviran',
           template,
         );
       }
