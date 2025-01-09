@@ -10,12 +10,16 @@ import * as path from 'node:path';
 export class EmailService {
   readonly #logger = new Logger(EmailService.name);
   readonly #emailAddress: string;
+  readonly nodeEnv: string;
   constructor(private readonly configService: ConfigService) {
     sendgrid.setApiKey(this.configService.getOrThrow('SENDGRID_API_KEY'));
     this.#emailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
+    this.nodeEnv = this.configService.getOrThrow('NODE_ENV');
   }
 
   async sendEmail(email: string, subject: string, content: string) {
+    if (this.nodeEnv !== 'production') return;
+
     const msg = {
       to: email,
       from: this.#emailAddress,

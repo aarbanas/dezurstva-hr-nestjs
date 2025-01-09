@@ -24,6 +24,7 @@ model User {
   organisationAttributes     OrganisationAttributes? @relation(fields: [organisationAttributesId], references: [id], onDelete: Cascade)
   organisationAttributesId   Int?                    @unique
   profilePhotoKey            String?
+  PasswordResetToken         PasswordResetToken[]
 }
 
 model UserAttributes {
@@ -56,6 +57,16 @@ model Certificate {
   updatedAt       DateTime        @updatedAt
   userAttribute   UserAttributes? @relation(fields: [userAttributeId], references: [id], onDelete: Cascade)
   userAttributeId Int?
+}
+
+model PasswordResetToken {
+  userId      Int    @map("user_id")
+  token       String @unique @map("token")
+  tokenExpiry BigInt @map("token_expiry")
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, token]) // Composite primary key
+  @@map("password_reset_tokens") // Map model to the table name
 }
 
 enum Role {

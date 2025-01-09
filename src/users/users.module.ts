@@ -7,10 +7,18 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { BcryptService } from '../service/bcrypt.service';
 import { UsersRepository } from './repository/users.repository';
 import { NotificationModule } from '../notification/notification.module';
+import { ResetPasswordController } from './reset-password/reset-password.controller';
+import { ResetPasswordService } from './reset-password/reset-password.service';
 
 @Module({
-  controllers: [UsersController],
-  providers: [UsersService, BcryptService, S3Service, UsersRepository],
+  controllers: [UsersController, ResetPasswordController],
+  providers: [
+    UsersService,
+    BcryptService,
+    S3Service,
+    UsersRepository,
+    ResetPasswordService,
+  ],
   imports: [PrismaModule, NotificationModule],
   exports: [UsersService],
 })
