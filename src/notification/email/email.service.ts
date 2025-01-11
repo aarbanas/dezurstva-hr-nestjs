@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import * as sendgrid from '@sendgrid/mail';
+import sgMail from '@sendgrid/mail';
 import { ConfigService } from '@nestjs/config';
 import Handlebars from 'handlebars';
 import { templates } from './templates/templates';
@@ -12,9 +12,9 @@ export class EmailService {
   readonly #emailAddress: string;
   readonly nodeEnv: string;
   constructor(private readonly configService: ConfigService) {
-    sendgrid.setApiKey(this.configService.getOrThrow('SENDGRID_API_KEY'));
+    sgMail.setApiKey(this.configService.getOrThrow('SENDGRID_API_KEY'));
     this.#emailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
-    this.nodeEnv = this.configService.getOrThrow('NODE_ENV');
+    this.nodeEnv = this.configService.getOrThrow('ENV');
   }
 
   async sendEmail(email: string, subject: string, content: string) {
@@ -28,7 +28,7 @@ export class EmailService {
     };
 
     try {
-      await sendgrid.send(msg);
+      await sgMail.send(msg);
     } catch (e) {
       this.#logger.error(e);
       throw new BadRequestException();
