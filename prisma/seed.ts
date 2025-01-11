@@ -37,33 +37,33 @@ async function main() {
     },
   });
 
-  for (let i = 0; i < 20; i++) {
-    const cities = ['Rijeka', 'Zagreb', 'Split', 'Ljubljana'];
-    const _userAttr = await prisma.userAttributes.create({
-      data: {
-        firstname: `Test_${i + 1}`,
-        lastname: `User_${i + 1}`,
-        type: Object.values(UserType)[
-          Math.floor(Math.random() * Object.values(UserType).length)
-        ],
-        city: cities[Math.floor(Math.random() * cities.length)],
-      },
-    });
-
-    const userPwd = await bcrypt.hash(
-      Math.random().toString(36).slice(-8),
-      saltOrRounds,
-    );
-    await prisma.user.create({
-      data: {
-        email: `test_${i + 1}@test.com`,
-        password: userPwd,
-        role: 'USER',
-        active: true,
-        userAttributesId: _userAttr.id,
-      },
-    });
-  }
+  // for (let i = 0; i < 20; i++) {
+  //   const cities = ['Rijeka', 'Zagreb', 'Split', 'Ljubljana'];
+  //   const _userAttr = await prisma.userAttributes.create({
+  //     data: {
+  //       firstname: `Test_${i + 1}`,
+  //       lastname: `User_${i + 1}`,
+  //       type: Object.values(UserType)[
+  //         Math.floor(Math.random() * Object.values(UserType).length)
+  //       ],
+  //       city: cities[Math.floor(Math.random() * cities.length)],
+  //     },
+  //   });
+  //
+  //   const userPwd = await bcrypt.hash(
+  //     Math.random().toString(36).slice(-8),
+  //     saltOrRounds,
+  //   );
+  //   await prisma.user.create({
+  //     data: {
+  //       email: `test_${i + 1}@test.com`,
+  //       password: userPwd,
+  //       role: 'USER',
+  //       active: true,
+  //       userAttributesId: _userAttr.id,
+  //     },
+  //   });
+  // }
 }
 
 // execute the main function
