@@ -26,12 +26,6 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
 
-  app.enableCors({
-    origin: process.env.ENV === 'production' ? process.env.APP_URL : '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Set to true if you need to send cookies
-  });
-
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap().catch(() => {
