@@ -6,6 +6,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { MailService } from '@sendgrid/mail';
 import * as process from 'node:process';
+import { printTree } from '../../printTree';
 
 const sendgridClient = new MailService();
 
@@ -39,6 +40,15 @@ export class EmailService {
   }
 
   generateTemplate<T>(data: T, _template: keyof typeof templates): string {
+    const srcPath = path.join(process.cwd(), 'src');
+
+    if (fs.existsSync(srcPath)) {
+      console.log(`\nTree structure of ${srcPath}:\n`);
+      printTree(srcPath);
+    } else {
+      console.log(`The /src folder does not exist in the current directory.`);
+    }
+
     const templatePath = path.join(
       process.cwd(),
       `src/notification/email/${templates[_template]}`,
