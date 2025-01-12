@@ -12,5 +12,10 @@
       "dest": "src/main.ts",
       "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     }
-  ]
+  ],
+  "functions": {
+    "src/*": {
+      "includeFiles": "src/notification/email/templates/**/*.hbs"
+    }
+  }
 }
