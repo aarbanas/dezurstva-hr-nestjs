@@ -21,9 +21,11 @@ import * as process from 'node:process';
 import { EmailService } from '../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { UserRegisterTemplateData } from '../notification/email/templates/types';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
+  private logger = new Logger('UsersService');
   readonly #appName: string;
   readonly #appUrl: string;
   constructor(
@@ -191,8 +193,15 @@ export class UsersService {
       hostname: string;
     }>(
       `${BASE_URL}?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      },
     );
 
+    this.logger.log('RECAPTCHA_SECRET_KEY', process.env.RECAPTCHA_SECRET_KEY);
+    this.logger.log('token', token);
+
+    this.logger.debug(JSON.stringify(res.data));
     return res.data.success;
   }
 }
