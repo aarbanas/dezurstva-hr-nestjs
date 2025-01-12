@@ -5,6 +5,7 @@ import { templates } from './templates/templates';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { MailService } from '@sendgrid/mail';
+import * as process from 'node:process';
 
 const sendgridClient = new MailService();
 
@@ -38,7 +39,10 @@ export class EmailService {
   }
 
   generateTemplate<T>(data: T, _template: keyof typeof templates): string {
-    const templatePath = path.resolve(__dirname, templates[_template]);
+    const templatePath = path.join(
+      process.cwd(),
+      `src/notification/email/${templates[_template]}`,
+    );
     const templateFile = fs.readFileSync(templatePath, 'utf8');
 
     const template = Handlebars.compile(templateFile);
