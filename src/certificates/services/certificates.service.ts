@@ -18,7 +18,6 @@ import {
   UpdateCertificateDto,
 } from '../dto';
 import { EmailService } from '../../notification/email/email.service';
-import { UserRegisterTemplateData } from '../../notification/email/templates/types';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -90,21 +89,14 @@ export class CertificatesService {
       },
     });
 
-    const template =
-      this.emailService.generateTemplate<UserRegisterTemplateData>(
-        {
-          appName: this.#appName,
-          userEmail: user.email,
-          link: `${this.#appUrl}/admin/users/profile/${userId}`,
-          year: new Date().getFullYear(),
-        },
-        'ADMIN_USER_UPLOAD_CERTIFICATE',
-      );
-
-    await this.emailService.sendEmail(
+    await this.emailService.sendAdminUserCertificateUploadedEmail(
       this.#adminEmailAddress,
-      'Novi certifikat dodan',
-      template,
+      {
+        appName: this.#appName,
+        userEmail: user.email,
+        link: `${this.#appUrl}/admin/users/profile/${userId}`,
+        year: new Date().getFullYear(),
+      },
     );
 
     return result;

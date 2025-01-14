@@ -20,7 +20,6 @@ import axios from 'axios';
 import * as process from 'node:process';
 import { EmailService } from '../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
-import { UserRegisterTemplateData } from '../notification/email/templates/types';
 
 @Injectable()
 export class UsersService {
@@ -132,21 +131,14 @@ export class UsersService {
         updatedUser.active
       ) {
         // Send activation email
-        const template =
-          this.emailService.generateTemplate<UserRegisterTemplateData>(
-            {
-              appName: this.#appName,
-              userEmail: updatedUser.email,
-              link: this.#appUrl,
-              year: new Date().getFullYear(),
-            },
-            'ORGANISATION_ACTIVATED',
-          );
-
-        await this.emailService.sendEmail(
+        await this.emailService.sendOrganisationActivatedEmail(
           updatedUser.email,
-          'Korisnički račun aktiviran',
-          template,
+          {
+            appName: this.#appName,
+            userEmail: updatedUser.email,
+            link: this.#appUrl,
+            year: new Date().getFullYear(),
+          },
         );
       }
     } catch (e) {

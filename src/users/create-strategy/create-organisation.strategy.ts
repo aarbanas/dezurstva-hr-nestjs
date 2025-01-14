@@ -5,10 +5,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { OrganisationAttributes, User } from '@prisma/client';
 import { EmailService } from '../../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
-import {
-  OrganisationRegisterTemplateData,
-  UserRegisterTemplateData,
-} from '../../notification/email/templates/types';
 
 export class CreateOrganisationStrategy implements ICreateStrategy {
   readonly #appName: string;
@@ -64,43 +60,25 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
   }
 
   private async sendEmails(email: string, id: number): Promise<void> {
-    // Send emails
-    const orgRegisterTemplate =
-      this.emailService.generateTemplate<OrganisationRegisterTemplateData>(
-        {
-          appName: this.#appName,
-          userEmail: email,
-          bankName: this.#bankName,
-          accountNumber: this.#accountNumber,
-          iban: this.#iban,
-          swift: this.#swift,
-          amount: this.#amount,
-          year: new Date().getFullYear(),
-        },
-        'ORGANISATION_REGISTER',
-      );
+    await this.emailService.sendOrganisationRegisterEmail(email, {
+      appName: this.#appName,
+      userEmail: email,
+      bankName: this.#bankName,
+      accountNumber: this.#accountNumber,
+      iban: this.#iban,
+      swift: this.#swift,
+      amount: this.#amount,
+      year: new Date().getFullYear(),
+    });
 
-    const adminOrgRegisterTemplate =
-      this.emailService.generateTemplate<UserRegisterTemplateData>(
-        {
-          appName: this.#appName,
-          userEmail: email,
-          link: `${this.#appUrl}/admin/organisations/profile/${id}`,
-          year: new Date().getFullYear(),
-        },
-        'ADMIN_ORGANISATION_REGISTER',
-      );
-
-    await this.emailService.sendEmail(
-      email,
-      'Uspješna registracija',
-      orgRegisterTemplate,
-    );
-
-    await this.emailService.sendEmail(
+    await this.emailService.sendAdminOrganisationRegisterEmail(
       this.#adminEmail,
-      'Nova registracija organizacije',
-      adminOrgRegisterTemplate,
+      {
+        appName: this.#appName,
+        userEmail: email,
+        link: `${this.#appUrl}/admin/organisations/profile/${id}`,
+        year: new Date().getFullYear(),
+      },
     );
   }
 }

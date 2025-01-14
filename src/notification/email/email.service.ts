@@ -1,27 +1,92 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, Scope } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Handlebars from 'handlebars';
-import { templates } from './templates/templates';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { MailService } from '@sendgrid/mail';
-import * as process from 'node:process';
-import { printTree } from '../../printTree';
+import { ITemplateStrategy } from './templateStrategies/ITemplateStrategy';
+import {
+  OrganisationRegisterTemplateData,
+  UserRegisterTemplateData,
+} from './templateStrategies/types';
+import { UserRegisteredStrategy } from './templateStrategies/UserRegisteredStrategy';
+import { OrganisationRegisteredStrategy } from './templateStrategies/OrganisationRegisteredStrategy';
+import { AdminOrganisationRegisteredStrategy } from './templateStrategies/AdminOrganisationRegisteredStrategy';
+import { ForgotPasswordStrategy } from './templateStrategies/ForgotPasswordStrategy';
+import { OrganisationActivatedStrategy } from './templateStrategies/OrganisationActivatedStrategy';
+import { AdminUserCertificateUploadedStrategy } from './templateStrategies/AdminUserCertificateUploadedStrategy';
 
 const sendgridClient = new MailService();
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class EmailService {
   readonly #logger = new Logger(EmailService.name);
   readonly #emailAddress: string;
   readonly nodeEnv: string;
+  private strategy: ITemplateStrategy;
+
   constructor(private readonly configService: ConfigService) {
     sendgridClient.setApiKey(this.configService.getOrThrow('SENDGRID_API_KEY'));
     this.#emailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
     this.nodeEnv = this.configService.getOrThrow('ENV');
   }
 
-  async sendEmail(email: string, subject: string, content: string) {
+  async sendUserRegisterEmail(email: string, data: UserRegisterTemplateData) {
+    this.setStrategy(new UserRegisteredStrategy());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(email, 'Uspješna registracija', template);
+  }
+
+  async sendOrganisationRegisterEmail(
+    email: string,
+    data: OrganisationRegisterTemplateData,
+  ) {
+    this.setStrategy(new OrganisationRegisteredStrategy());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(email, 'Uspješna registracija', template);
+  }
+
+  async sendResetPasswordEmail(email: string, data: UserRegisterTemplateData) {
+    this.setStrategy(new ForgotPasswordStrategy());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(email, 'Zaboravljena lozinka', template);
+  }
+
+  async sendOrganisationActivatedEmail(
+    email: string,
+    data: UserRegisterTemplateData,
+  ) {
+    this.setStrategy(new OrganisationActivatedStrategy());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(email, 'Korisnički račun aktiviran', template);
+  }
+
+  async sendAdminOrganisationRegisterEmail(
+    email: string,
+    data: UserRegisterTemplateData,
+  ) {
+    this.setStrategy(new AdminOrganisationRegisteredStrategy());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(email, 'Nova registracija organizacije', template);
+  }
+
+  async sendAdminUserCertificateUploadedEmail(
+    email: string,
+    data: UserRegisterTemplateData,
+  ) {
+    this.setStrategy(new AdminUserCertificateUploadedStrategy());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(email, 'Novi certifikat je dodan', template);
+  }
+
+  private setStrategy(strategy: ITemplateStrategy) {
+    this.strategy = strategy;
+  }
+
+  private async sendEmail(email: string, subject: string, content: string) {
     if (this.nodeEnv !== 'production') return;
 
     const msg = {
@@ -39,24 +104,9 @@ export class EmailService {
     }
   }
 
-  generateTemplate<T>(data: T, _template: keyof typeof templates): string {
-    const srcPath = path.join(process.cwd(), 'src');
-
-    if (fs.existsSync(srcPath)) {
-      console.log(`\nTree structure of ${srcPath}:\n`);
-      printTree(srcPath);
-    } else {
-      console.log(`The /src folder does not exist in the current directory.`);
-    }
-
-    const templatePath = path.join(
-      process.cwd(),
-      `src/notification/email/${templates[_template]}`,
-    );
-    const templateFile = fs.readFileSync(templatePath, 'utf8');
-
-    const template = Handlebars.compile(templateFile);
-
-    return template(data);
+  private getTemplate(
+    data: UserRegisterTemplateData | OrganisationRegisterTemplateData,
+  ): string {
+    return this.strategy.getTemplate(data);
   }
 }

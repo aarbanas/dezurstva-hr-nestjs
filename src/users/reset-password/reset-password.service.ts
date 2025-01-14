@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { randomBytes, createHash } from 'crypto';
 import { EmailService } from '../../notification/email/email.service';
-import { UserRegisterTemplateData } from '../../notification/email/templates/types';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -43,18 +42,12 @@ export class ResetPasswordService {
       },
     });
 
-    const template =
-      this.emailService.generateTemplate<UserRegisterTemplateData>(
-        {
-          appName: this.#appName,
-          userEmail: email,
-          link: `${this.#appUrl}/reset-password&token=${token}`,
-          year: new Date().getFullYear(),
-        },
-        'FORGOT_PASSWORD',
-      );
-
-    await this.emailService.sendEmail(email, 'Zaboravljena lozinka', template);
+    await this.emailService.sendResetPasswordEmail(email, {
+      appName: this.#appName,
+      userEmail: email,
+      link: `${this.#appUrl}/reset-password&token=${token}`,
+      year: new Date().getFullYear(),
+    });
   }
 
   async resetPassword(token: string, newPassword: string) {
