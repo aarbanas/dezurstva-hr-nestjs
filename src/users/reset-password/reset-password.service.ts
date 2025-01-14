@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { randomBytes, createHash } from 'crypto';
 import { EmailService } from '../../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
+import { BcryptService } from '../../service/bcrypt.service';
 
 @Injectable()
 export class ResetPasswordService {
@@ -13,6 +14,7 @@ export class ResetPasswordService {
     private readonly prismaService: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
+    private readonly bcryptService: BcryptService,
   ) {
     this.#appName = this.configService.getOrThrow('APP_NAME');
     this.#appUrl = this.configService.getOrThrow('APP_URL');
@@ -67,13 +69,15 @@ export class ResetPasswordService {
       return new NotFoundException();
     }
 
+    const password = await this.bcryptService.hashPassword(newPassword);
+
     await this.prismaService.$transaction(async (tx) => {
       await tx.user.update({
         where: {
           id: passwordResetToken.userId,
         },
         data: {
-          password: newPassword,
+          password,
           updatedAt: new Date(),
         },
       });
