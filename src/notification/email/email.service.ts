@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, Scope } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@sendgrid/mail';
 import { ITemplateStrategy } from './templateStrategies/ITemplateStrategy';
@@ -15,7 +15,7 @@ import { AdminUserCertificateUploadedStrategy } from './templateStrategies/Admin
 
 const sendgridClient = new MailService();
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class EmailService {
   readonly #logger = new Logger(EmailService.name);
   readonly #emailAddress: string;
