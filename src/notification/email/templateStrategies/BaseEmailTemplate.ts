@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+export const baseEmailTemplate = (data: string): string => {
+  return `<!DOCTYPE html>
 <html lang="hr-HR">
 <head>
   <meta charset="UTF-8">
-  <title>Dobrodošli u {{appName}}!</title>
+  <title>Dežurstva.com</title>
   <style>
       body {
           font-family: Arial, sans-serif;
@@ -50,29 +51,7 @@
   </style>
 </head>
 <body>
-<div class="email-container">
-  <div class="email-header">
-    <h1>Dobrodošli u {{appName}}!</h1>
-  </div>
-  <div class="email-body">
-    <p>Pozdrav {{userEmail}},</p>
-    <p>Radujemo se vašoj registraciji u {{appName}}. Molimo vas da izvrišite uplatu po niže navedenim podacima kako
-      biste mogli započeti koristiti našu aplikaciju te pretraživati liječnike, medicinske tehničare i spasioce.
-      Po aktivaciji zaprimiti ćete mail.</p>
-    <p>Podaci za uplatu:</p>
-    <ul>
-      <li>Ime banke: {{bankName}}</li>
-      <li>Broj računa: {{accountNumber}}</li>
-      <li>IBAN: {{iban}}</li>
-      <li>SWIFT: {{swift}}</li>
-      <li>Iznos: {{amount}}</li>
-    </ul>
-    <p>Ako imate bilo kakvih pitanja stojimo na raspologanju</p>
-    <p>Lijepi pozdrav,<br>{{appName}}</p>
-  </div>
-  <div class="email-footer">
-    <p>&copy; {{year}} {{appName}}. All rights reserved.</p>
-  </div>
-</div>
+${data}
 </body>
-</html>
+</html>`;
+};

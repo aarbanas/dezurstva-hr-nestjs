@@ -5,7 +5,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ICreateStrategy } from './icreate.strategy';
 import { EmailService } from '../../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
-import { UserRegisterTemplateData } from '../../notification/email/templates/types';
 
 export class CreateUserStrategy implements ICreateStrategy {
   readonly #appName: string;
@@ -46,22 +45,12 @@ export class CreateUserStrategy implements ICreateStrategy {
       });
     });
 
-    const template =
-      this.emailService.generateTemplate<UserRegisterTemplateData>(
-        {
-          appName: this.#appName,
-          userEmail: user.email,
-          link: `${this.#appUrl}/profile/certificates`,
-          year: new Date().getFullYear(),
-        },
-        'USER_REGISTER',
-      );
-
-    await this.emailService.sendEmail(
-      user.email,
-      'Uspješna registracija',
-      template,
-    );
+    await this.emailService.sendUserRegisterEmail(user.email, {
+      appName: this.#appName,
+      userEmail: user.email,
+      link: `${this.#appUrl}/profile/certificates`,
+      year: new Date().getFullYear(),
+    });
 
     return user;
   }
