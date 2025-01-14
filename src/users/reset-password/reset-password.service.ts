@@ -45,7 +45,7 @@ export class ResetPasswordService {
     await this.emailService.sendResetPasswordEmail(email, {
       appName: this.#appName,
       userEmail: email,
-      link: `${this.#appUrl}/reset-password&token=${token}`,
+      link: `${this.#appUrl}/reset-password?token=${token}`,
       year: new Date().getFullYear(),
     });
   }
