@@ -26,6 +26,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Serialize } from '../../interceptors/serialize.interceptor';
 import { CertificatesService } from '../services';
 import { SessionUser } from '../../auth/passport-strategies/jwt.strategy';
+import { CertificateNotifyUserDto } from '../dto/certificate-notify-user.dto';
 
 @Controller('certificates')
 @ApiTags('certificates')
@@ -83,5 +84,15 @@ export class CertificatesController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.certificatesService.remove(user, id);
+  }
+
+  @Post('notify/:id')
+  @UseGuards(JwtAuthGuard, RoleGuard([Role.ADMIN]))
+  async notifyToUpload(
+    @Body() body: CertificateNotifyUserDto,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const { certificateType } = body;
+    return this.certificatesService.notifyToUpload(id, certificateType);
   }
 }

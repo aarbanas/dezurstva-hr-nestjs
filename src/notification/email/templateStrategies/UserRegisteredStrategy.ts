@@ -15,7 +15,7 @@ export class UserRegisteredStrategy implements ITemplateStrategy {
           tvoje usluge.</p>
         <p>Prijavi se u aplikaciju te nakon toga klikni na poveznicu ispod to dodaj valjani dokument:</p>
         <p>
-          <a href="${data.link}" class="cta-button">Dodaj certifikate</a>
+          <a href="${data.link}" class="cta-button">Dodaj certifikat</a>
         </p>
         <p>Ako imaš bilo kakvih pitanja stojimo na raspologanju</p>
         <p>Lijepi pozdrav,<br>${data.appName}</p>
