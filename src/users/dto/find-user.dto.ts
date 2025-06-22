@@ -20,4 +20,7 @@ export class FindUserDto {
 
   @IsIn(['USER', 'ORGANISATION'])
   type: Omit<Role, 'ADMIN'>;
+
+  @ApiPropertyOptional()
+  populateCertificates?: boolean;
 }

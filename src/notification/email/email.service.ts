@@ -1,8 +1,15 @@
-import { BadRequestException, Injectable, Logger, Scope } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  Scope,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@sendgrid/mail';
 import { ITemplateStrategy } from './templateStrategies/ITemplateStrategy';
 import {
+  NotifyCustomerForCertificateUploadTemplateData,
   OrganisationRegisterTemplateData,
   UserRegisterTemplateData,
 } from './templateStrategies/types';
@@ -12,6 +19,7 @@ import { AdminOrganisationRegisteredStrategy } from './templateStrategies/AdminO
 import { ForgotPasswordStrategy } from './templateStrategies/ForgotPasswordStrategy';
 import { OrganisationActivatedStrategy } from './templateStrategies/OrganisationActivatedStrategy';
 import { AdminUserCertificateUploadedStrategy } from './templateStrategies/AdminUserCertificateUploadedStrategy';
+import { AdminNotifyCustomerForCertificateUpload } from './templateStrategies/AdminNotifyCustomerForCertificateUpload';
 
 const sendgridClient = new MailService();
 
@@ -82,12 +90,26 @@ export class EmailService {
     return this.sendEmail(email, 'Novi certifikat je dodan', template);
   }
 
+  async sendAdminNotifyCustomerForCertificateUploadEmail(
+    email: string,
+    data: NotifyCustomerForCertificateUploadTemplateData,
+  ) {
+    this.setStrategy(new AdminNotifyCustomerForCertificateUpload());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(
+      email,
+      'Podsjetnik: Potrebno je učitati certifikat za dovršetak registracije',
+      template,
+    );
+  }
+
   private setStrategy(strategy: ITemplateStrategy) {
     this.strategy = strategy;
   }
 
   private async sendEmail(email: string, subject: string, content: string) {
-    if (this.nodeEnv !== 'production') return;
+    if (this.nodeEnv !== 'production') throw new ForbiddenException();
 
     const msg = {
       to: email,
@@ -105,7 +127,10 @@ export class EmailService {
   }
 
   private getTemplate(
-    data: UserRegisterTemplateData | OrganisationRegisterTemplateData,
+    data:
+      | UserRegisterTemplateData
+      | OrganisationRegisterTemplateData
+      | NotifyCustomerForCertificateUploadTemplateData,
   ): string {
     return this.strategy.getTemplate(data);
   }

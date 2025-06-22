@@ -117,7 +117,12 @@ export class UsersRepository {
         take,
         where,
         include: {
-          userAttributes: query.type === Role.USER,
+          userAttributes:
+            query.type === Role.USER
+              ? query.populateCertificates
+                ? { include: { certificates: true } }
+                : true
+              : false,
           organisationAttributes: query.type === Role.ORGANISATION,
         },
         ...(orderBy && { orderBy }),

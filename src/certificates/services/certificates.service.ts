@@ -19,12 +19,14 @@ import {
 } from '../dto';
 import { EmailService } from '../../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
+import { CertificateType } from '@prisma/client';
 
 @Injectable()
 export class CertificatesService {
   readonly #appName: string;
   readonly #appUrl: string;
   readonly #adminEmailAddress: string;
+  readonly #infoEmailAddress: string;
   constructor(
     private prismaService: PrismaService,
     private s3Service: S3Service,
@@ -36,6 +38,7 @@ export class CertificatesService {
     this.#adminEmailAddress = this.configService.getOrThrow(
       'ADMIN_EMAIL_ADDRESS',
     );
+    this.#infoEmailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
   }
 
   get(id: number) {
@@ -137,5 +140,30 @@ export class CertificatesService {
     if (certificate.key) await this.s3Service.deleteOne(certificate.key);
 
     await this.prismaService.certificate.delete({ where: { id } });
+  }
+
+  async notifyToUpload(
+    id: number,
+    certificateType: CertificateType,
+  ): Promise<void> {
+    const user = await this.prismaService.user.findFirst({
+      where: { id },
+      include: { userAttributes: true },
+    });
+    if (!user) throw new NotFoundException();
+
+    await this.emailService.sendAdminNotifyCustomerForCertificateUploadEmail(
+      user.email,
+      {
+        userFirstName: user.userAttributes?.firstname,
+        userLastName: user.userAttributes?.lastname,
+        appEmail: this.#infoEmailAddress,
+        appName: this.#appName,
+        appUrl: this.#appUrl,
+        certificateType,
+        link: `${this.#appUrl}/profile/certificates`,
+        year: new Date().getFullYear(),
+      },
+    );
   }
 }
