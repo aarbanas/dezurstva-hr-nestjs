@@ -13,20 +13,43 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy() {
-    this.client.quit(); //
+    this.client.quit();
   }
 
-  async set(key: string, otp: string, ttlInSeconds: number): Promise<void> {
-    await this.client.set(key, otp, 'EX', ttlInSeconds); // 'EX' sets an expiration time
+  async set(key: string, value: string): Promise<void> {
+    await this.client.set(key, value);
   }
 
-  // Example of getting OTP from Redis
   async get(key: string): Promise<string | null> {
     return this.client.get(key);
   }
 
-  // Example of deleting OTP (optional)
   async delete(key: string): Promise<number> {
     return this.client.del(key);
+  }
+
+  async append(key: string, value: string): Promise<void> {
+    await this.client.rpush(key, value);
+  }
+
+  async removeItemFromList(
+    key: string,
+    count: number,
+    value: string,
+  ): Promise<number> {
+    return this.client.lrem(key, count, value);
+  }
+
+  async getFromList(
+    key: string,
+    start = 0,
+    stop = -1,
+  ): Promise<string[] | null> {
+    try {
+      return await this.client.lrange(key, start, stop);
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   }
 }

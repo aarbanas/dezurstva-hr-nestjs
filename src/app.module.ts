@@ -7,16 +7,21 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RedisModule } from './redis/redis.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ListenersModule } from './listeners/listeners.module';
 
 @Module({
   imports: [
-    // Add custom validation https://docs.nestjs.com/techniques/configuration#custom-validate-function
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     UsersModule,
     CertificatesModule,
     AuthModule,
     ScheduleModule.forRoot(),
+    RedisModule,
+    EventEmitterModule.forRoot(),
+    ListenersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,6 +1,7 @@
 import { Controller, ForbiddenException, Get, Headers } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EmailQueueService } from './email/email-queue.service';
+import { EmailCacheService } from './email/email-cache.service';
 
 @Controller('redis')
 export class RedisController {
@@ -8,6 +9,7 @@ export class RedisController {
   constructor(
     private readonly configService: ConfigService,
     private readonly emailQueueService: EmailQueueService,
+    private readonly emailCacheService: EmailCacheService,
   ) {
     this.token = this.configService.getOrThrow('QUEUE_SECRET');
   }
@@ -16,6 +18,9 @@ export class RedisController {
   async processEmailQueue(@Headers('x-secret-token') token: string) {
     if (token !== this.token) throw new ForbiddenException();
 
-    return this.emailQueueService.processQueue();
+    await this.emailCacheService.resetDailyEmailCount();
+    await this.emailQueueService.processQueue();
+
+    return true;
   }
 }
