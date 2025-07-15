@@ -24,10 +24,7 @@
   "crons": [
     {
       "path": "/redis/process-email-queue",
-      "schedule": "0 1 * * *",
-      "headers": {
-        "x-secret-token": "@QUEUE_SECRET"
-      }
+      "schedule": "0 1 * * *"
     }
   ]
 }

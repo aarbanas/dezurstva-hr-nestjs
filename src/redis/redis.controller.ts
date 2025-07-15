@@ -11,16 +11,16 @@ export class RedisController {
     private readonly emailQueueService: EmailQueueService,
     private readonly emailCacheService: EmailCacheService,
   ) {
-    this.token = this.configService.getOrThrow('QUEUE_SECRET');
+    this.token = this.configService.getOrThrow('CRON_SECRET');
   }
 
   @Get('process-email-queue')
-  async processEmailQueue(@Headers('x-secret-token') token: string) {
+  async processEmailQueue(@Headers('authorization') token: string) {
     if (token !== this.token) throw new ForbiddenException();
 
     await this.emailCacheService.resetDailyEmailCount();
     await this.emailQueueService.processQueue();
 
-    return true;
+    return { success: true };
   }
 }
