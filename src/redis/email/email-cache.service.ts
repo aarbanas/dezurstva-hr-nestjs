@@ -17,7 +17,9 @@ export class EmailCacheService {
     return cachedCount ? parseInt(cachedCount, 10) : 0;
   }
 
-  async isDailyEmailLimitFull(data: EmailQueueData): Promise<boolean> {
+  async validateIfDailyLimitIsHitAndQueueItems(
+    data: EmailQueueData,
+  ): Promise<boolean> {
     const currentCount = await this.getCurrentEmailCount();
     if (currentCount >= this.DAILY_LIMIT) {
       await this.emailQueueService.enqueueEmail(data);
