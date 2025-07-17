@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
 import { EmailQueueData, EmailQueueService } from './email-queue.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DiscordQueueEvent } from '../../events/discord.events';
 
 @Injectable()
 export class EmailCacheService {
@@ -9,7 +11,8 @@ export class EmailCacheService {
 
   constructor(
     private readonly redisService: RedisService,
-    private emailQueueService: EmailQueueService,
+    private readonly emailQueueService: EmailQueueService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private async getCurrentEmailCount(): Promise<number> {
@@ -23,6 +26,14 @@ export class EmailCacheService {
     const currentCount = await this.getCurrentEmailCount();
     if (currentCount >= this.DAILY_LIMIT) {
       await this.emailQueueService.enqueueEmail(data);
+
+      const queueLength = await this.emailQueueService.getQueueLength();
+      this.eventEmitter.emit(
+        'discord.queue',
+        new DiscordQueueEvent(
+          `📚📚📚 Daily email limit reached! Queued email for later processing. Current queue length: ${queueLength}`,
+        ),
+      );
       return true;
     }
 

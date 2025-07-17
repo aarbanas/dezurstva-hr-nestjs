@@ -32,6 +32,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.rpush(key, value);
   }
 
+  async getListLength(key: string): Promise<number> {
+    return this.client.llen(key);
+  }
+
   async removeItemFromList(
     key: string,
     count: number,
