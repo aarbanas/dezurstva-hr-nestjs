@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ResendEmailEvent } from '../../events/resend-email.event';
+import { DiscordQueueEvent } from '../../events/discord.events';
 
 export type EmailQueueData = {
   to: string;
@@ -26,7 +27,18 @@ export class EmailQueueService {
     const items = await this.getItemsFromQueue();
     if (!items) return;
 
-    for (const item of items) {
+    for (const [index, item] of items.entries()) {
+      if (index >= 99) {
+        const queueLength = await this.getQueueLength();
+        this.eventEmitter.emit(
+          'discord.queue',
+          new DiscordQueueEvent(
+            `📕📕📕 Maximum daily queue resend reached. Current queue length: ${queueLength}`,
+          ),
+        );
+        break;
+      }
+
       const emailData: EmailQueueData = JSON.parse(item);
       this.eventEmitter.emit('resend.email', new ResendEmailEvent(emailData));
       await this.deleteItemFromQueue(emailData);
@@ -34,6 +46,11 @@ export class EmailQueueService {
 
     // Clear the queue after processing
     await this.redisService.delete(this.QUEUE_KEY);
+
+    this.eventEmitter.emit(
+      'discord.queue',
+      new DiscordQueueEvent(`✅ Email queue processed successfully.`),
+    );
   }
 
   async getQueueLength(): Promise<number> {

@@ -22,6 +22,7 @@ import { AdminNotifyCustomerForCertificateUpload } from './templateStrategies/Ad
 import { Resend } from 'resend';
 import { EmailCacheService } from '../../redis/email/email-cache.service';
 import { EmailQueueData } from '../../redis/email/email-queue.service';
+import { ApologyEmailForRegistrationWithIssues } from './templateStrategies/ApologyEmailForRegistrationWithIssues';
 
 @Injectable({ scope: Scope.REQUEST })
 export class EmailService {
@@ -47,6 +48,20 @@ export class EmailService {
     const template = this.getTemplate(data);
 
     return this.sendEmail(email, 'Uspješna registracija', template);
+  }
+
+  async sendApologyUponRegistration(
+    email: string,
+    data: UserRegisterTemplateData,
+  ) {
+    this.setStrategy(new ApologyEmailForRegistrationWithIssues());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(
+      email,
+      'Isprika zbog prekida rada sustava — sustav ponovno dostupan',
+      template,
+    );
   }
 
   async sendOrganisationRegisterEmail(

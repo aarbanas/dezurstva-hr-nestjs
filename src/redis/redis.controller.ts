@@ -27,8 +27,6 @@ export class RedisController {
     await this.emailCacheService.resetDailyEmailCount();
     await this.emailQueueService.processQueue();
 
-    this.emitEvent('✅ Cron job finished: Queue processing completed.');
-
     return { success: true };
   }
 
