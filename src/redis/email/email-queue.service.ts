@@ -57,10 +57,6 @@ export class EmailQueueService {
     return this.redisService.getListLength(this.QUEUE_KEY);
   }
 
-  async getQueueLength(): Promise<number> {
-    return this.redisService.getListLength(this.QUEUE_KEY);
-  }
-
   private async getItemsFromQueue(): Promise<string[] | null> {
     return this.redisService.getFromList(this.QUEUE_KEY);
   }
