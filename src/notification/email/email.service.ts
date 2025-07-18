@@ -23,6 +23,8 @@ import { Resend } from 'resend';
 import { EmailCacheService } from '../../redis/email/email-cache.service';
 import { EmailQueueData } from '../../redis/email/email-queue.service';
 import { ApologyEmailForRegistrationWithIssues } from './templateStrategies/ApologyEmailForRegistrationWithIssues';
+import { DiscordQueueEvent } from '../../events/discord.events';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable({ scope: Scope.REQUEST })
 export class EmailService {
@@ -35,6 +37,7 @@ export class EmailService {
   constructor(
     private readonly configService: ConfigService,
     private readonly emailCacheService: EmailCacheService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.#emailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
     this.nodeEnv = this.configService.getOrThrow('ENV');
@@ -138,7 +141,7 @@ export class EmailService {
     subject: string,
     content: string,
   ): Promise<void> {
-    if (this.nodeEnv !== 'production') throw new ForbiddenException();
+    // if (this.nodeEnv !== 'production') throw new ForbiddenException();
 
     const emailData: EmailQueueData = {
       to: email,
@@ -161,6 +164,17 @@ export class EmailService {
     });
 
     if (error) {
+      if (error.name === 'rate_limit_exceeded') {
+        this.eventEmitter.emit(
+          'discord.queue',
+          new DiscordQueueEvent(
+            `⏱️ Rate limit exceeded in Resend. Email will be queued for later processing.`,
+          ),
+        );
+        await this.emailCacheService.enqueueEmail(emailData);
+        return;
+      }
+
       this.#logger.error(error);
       throw new BadRequestException();
     }
