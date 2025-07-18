@@ -6,6 +6,6 @@ import { DiscordService } from './discord/discord.service';
 @Module({
   imports: [RedisModule],
   providers: [EmailService, DiscordService],
-  exports: [EmailService],
+  exports: [EmailService, DiscordService],
 })
 export class NotificationModule {}

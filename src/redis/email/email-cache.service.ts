@@ -50,4 +50,8 @@ export class EmailCacheService {
 
     await this.redisService.set(this.CACHE_KEY, newCount.toString());
   }
+
+  async enqueueEmail(data: EmailQueueData): Promise<void> {
+    return this.emailQueueService.enqueueEmail(data);
+  }
 }
