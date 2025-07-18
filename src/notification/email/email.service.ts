@@ -6,7 +6,6 @@ import {
   Scope,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MailService } from '@sendgrid/mail';
 import { ITemplateStrategy } from './templateStrategies/ITemplateStrategy';
 import {
   NotifyCustomerForCertificateUploadTemplateData,
@@ -20,20 +19,28 @@ import { ForgotPasswordStrategy } from './templateStrategies/ForgotPasswordStrat
 import { OrganisationActivatedStrategy } from './templateStrategies/OrganisationActivatedStrategy';
 import { AdminUserCertificateUploadedStrategy } from './templateStrategies/AdminUserCertificateUploadedStrategy';
 import { AdminNotifyCustomerForCertificateUpload } from './templateStrategies/AdminNotifyCustomerForCertificateUpload';
-
-const sendgridClient = new MailService();
+import { Resend } from 'resend';
+import { EmailCacheService } from '../../redis/email/email-cache.service';
+import { EmailQueueData } from '../../redis/email/email-queue.service';
+import { ApologyEmailForRegistrationWithIssues } from './templateStrategies/ApologyEmailForRegistrationWithIssues';
 
 @Injectable({ scope: Scope.REQUEST })
 export class EmailService {
   readonly #logger = new Logger(EmailService.name);
   readonly #emailAddress: string;
-  readonly nodeEnv: string;
+  private readonly nodeEnv: string;
   private strategy: ITemplateStrategy;
+  private readonly resendClient: Resend;
 
-  constructor(private readonly configService: ConfigService) {
-    sendgridClient.setApiKey(this.configService.getOrThrow('SENDGRID_API_KEY'));
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly emailCacheService: EmailCacheService,
+  ) {
     this.#emailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
     this.nodeEnv = this.configService.getOrThrow('ENV');
+    this.resendClient = new Resend(
+      this.configService.getOrThrow('RESEND_API_KEY'),
+    );
   }
 
   async sendUserRegisterEmail(email: string, data: UserRegisterTemplateData) {
@@ -41,6 +48,20 @@ export class EmailService {
     const template = this.getTemplate(data);
 
     return this.sendEmail(email, 'Uspješna registracija', template);
+  }
+
+  async sendApologyUponRegistration(
+    email: string,
+    data: UserRegisterTemplateData,
+  ) {
+    this.setStrategy(new ApologyEmailForRegistrationWithIssues());
+    const template = this.getTemplate(data);
+
+    return this.sendEmail(
+      email,
+      'Isprika zbog prekida rada sustava — sustav ponovno dostupan',
+      template,
+    );
   }
 
   async sendOrganisationRegisterEmail(
@@ -104,26 +125,47 @@ export class EmailService {
     );
   }
 
+  async resendEmail(email: string, subject: string, content: string) {
+    return this.sendEmail(email, subject, content);
+  }
+
   private setStrategy(strategy: ITemplateStrategy) {
     this.strategy = strategy;
   }
 
-  private async sendEmail(email: string, subject: string, content: string) {
+  private async sendEmail(
+    email: string,
+    subject: string,
+    content: string,
+  ): Promise<void> {
     if (this.nodeEnv !== 'production') throw new ForbiddenException();
 
-    const msg = {
+    const emailData: EmailQueueData = {
       to: email,
-      from: this.#emailAddress,
       subject,
-      html: content,
+      body: content,
     };
+    const dailyEmailLimit =
+      await this.emailCacheService.validateIfDailyLimitIsHitAndQueueItems(
+        emailData,
+      );
+    if (dailyEmailLimit) {
+      return;
+    }
 
-    try {
-      await sendgridClient.send(msg);
-    } catch (e) {
-      this.#logger.error(e);
+    const { error } = await this.resendClient.emails.send({
+      from: this.#emailAddress,
+      to: [emailData.to],
+      subject: emailData.subject,
+      html: emailData.body,
+    });
+
+    if (error) {
+      this.#logger.error(error);
       throw new BadRequestException();
     }
+
+    await this.emailCacheService.increaseEmailCount();
   }
 
   private getTemplate(
