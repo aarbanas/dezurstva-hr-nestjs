@@ -141,7 +141,7 @@ export class EmailService {
     subject: string,
     content: string,
   ): Promise<void> {
-    // if (this.nodeEnv !== 'production') throw new ForbiddenException();
+    if (this.nodeEnv !== 'production') throw new ForbiddenException();
 
     const emailData: EmailQueueData = {
       to: email,

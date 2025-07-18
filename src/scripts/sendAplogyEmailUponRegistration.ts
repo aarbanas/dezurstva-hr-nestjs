@@ -35,15 +35,7 @@ import { ConfigService } from '@nestjs/config';
     return;
   }
 
-  const idsToRepeat = [
-    17, 22, 35, 41, 47, 53, 82, 87, 93, 98, 108, 115, 119, 123, 126, 139, 151,
-    157, 164, 184, 191, 200,
-  ];
   for (const user of usersMissingCertificates) {
-    if (!idsToRepeat.includes(user.id)) {
-      continue;
-    }
-
     try {
       await emailService.sendApologyUponRegistration(user.email, {
         appName,
