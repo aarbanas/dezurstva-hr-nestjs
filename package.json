@@ -27,7 +27,8 @@
     "db:seed": "prisma db seed",
     "commit": "cz",
     "prepare": "husky install",
-    "scripts:apology": "ts-node src/scripts/sendAplogyEmailUponRegistration"
+    "scripts:apology": "ts-node src/scripts/sendAplogyEmailUponRegistration",
+    "scripts:queueRemove": "ts-node src/scripts/removeItemsFromQueue.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.637.0",

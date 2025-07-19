@@ -7,6 +7,7 @@ import { DiscordQueueEvent } from '../../events/discord.events';
 @Injectable()
 export class EmailCacheService {
   private readonly CACHE_KEY = 'emails_sent_today';
+  private readonly CACHE_TIMESTAMP_KEY = 'emails_sent_today_timestamp';
   private readonly DAILY_LIMIT = 100;
 
   constructor(
@@ -47,11 +48,23 @@ export class EmailCacheService {
   async increaseEmailCount(): Promise<void> {
     const currentCount = await this.getCurrentEmailCount();
     const newCount = currentCount + 1;
-
     await this.redisService.set(this.CACHE_KEY, newCount.toString());
+
+    if (newCount === 1) {
+      await this.setEmailCacheTimestamp();
+    }
   }
 
   async enqueueEmail(data: EmailQueueData): Promise<void> {
     return this.emailQueueService.enqueueEmail(data);
+  }
+
+  async getEmailCacheTimestamp(): Promise<string | null> {
+    return this.redisService.get(this.CACHE_TIMESTAMP_KEY);
+  }
+
+  private async setEmailCacheTimestamp(): Promise<void> {
+    const timestamp = new Date().toISOString();
+    await this.redisService.set(this.CACHE_TIMESTAMP_KEY, timestamp);
   }
 }

@@ -42,6 +42,9 @@ export class EmailQueueService {
       const emailData: EmailQueueData = JSON.parse(item);
       this.eventEmitter.emit('resend.email', new ResendEmailEvent(emailData));
       await this.deleteItemFromQueue(emailData);
+
+      // There is a rate limit of 1 email per second, so we wait a bit before processing the next one
+      await this.sleep(1000);
     }
 
     // Clear the queue after processing
@@ -57,17 +60,19 @@ export class EmailQueueService {
     return this.redisService.getListLength(this.QUEUE_KEY);
   }
 
-  private async getItemsFromQueue(): Promise<string[] | null> {
-    return this.redisService.getFromList(this.QUEUE_KEY);
+  async getItemsFromQueue(start = 0, stop = -1): Promise<string[] | null> {
+    return this.redisService.getFromList(this.QUEUE_KEY, start, stop);
   }
 
-  private async deleteItemFromQueue(queue: EmailQueueData) {
-    const test = await this.redisService.removeItemFromList(
+  async deleteItemFromQueue(queue: EmailQueueData) {
+    return this.redisService.removeItemFromList(
       this.QUEUE_KEY,
       1,
       JSON.stringify(queue),
     );
+  }
 
-    console.log(test);
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
