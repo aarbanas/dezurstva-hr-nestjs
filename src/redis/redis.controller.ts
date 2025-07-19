@@ -37,9 +37,9 @@ export class RedisController {
     const now = new Date();
     const elapsedTime =
       now.getTime() - new Date(dailyFirstEmailTimestamp).getTime();
-    if (elapsedTime < 26 * 60 * 60 * 1000) {
+    if (elapsedTime < 24 * 60 * 60 * 1000) {
       this.emitEvent(
-        `❌️ Cron job skipped. 26hours did not pass since ${dailyFirstEmailTimestamp}.`,
+        `❌️ Cron job skipped. 24hours did not pass since ${dailyFirstEmailTimestamp}.`,
       );
       return { success: false, message: '26 hours have not passed yet.' };
     }
