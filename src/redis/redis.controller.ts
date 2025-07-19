@@ -41,7 +41,7 @@ export class RedisController {
       this.emitEvent(
         `❌️ Cron job skipped. 24hours did not pass since ${dailyFirstEmailTimestamp}.`,
       );
-      return { success: false, message: '26 hours have not passed yet.' };
+      return { success: false, message: '24 hours have not passed yet.' };
     }
 
     this.emitEvent('🛠️ Cron job executed: Email queue processing.');

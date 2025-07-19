@@ -20,24 +20,23 @@ import {
 import { EmailService } from '../../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { CertificateType } from '@prisma/client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DiscordAdminInfoEvent } from '../../events/discord.events';
 
 @Injectable()
 export class CertificatesService {
   readonly #appName: string;
   readonly #appUrl: string;
-  readonly #adminEmailAddress: string;
   readonly #infoEmailAddress: string;
   constructor(
     private prismaService: PrismaService,
     private s3Service: S3Service,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.#appName = this.configService.getOrThrow('APP_NAME');
     this.#appUrl = this.configService.getOrThrow('APP_URL');
-    this.#adminEmailAddress = this.configService.getOrThrow(
-      'ADMIN_EMAIL_ADDRESS',
-    );
     this.#infoEmailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
   }
 
@@ -92,14 +91,18 @@ export class CertificatesService {
       },
     });
 
-    await this.emailService.sendAdminUserCertificateUploadedEmail(
-      this.#adminEmailAddress,
-      {
-        appName: this.#appName,
-        userEmail: user.email,
-        link: `${this.#appUrl}/admin/users/profile/${userId}`,
-        year: new Date().getFullYear(),
-      },
+    this.eventEmitter.emit(
+      'discord.admin.info',
+      new DiscordAdminInfoEvent(
+        `📜User ${user.email} with ID ${userId} uploaded new certificate.`,
+        [
+          {
+            title: 'Validate certificate',
+            url: `${this.#appUrl}/admin/users/profile/${userId}`,
+            color: 0x0099ff,
+          },
+        ],
+      ),
     );
 
     return result;
