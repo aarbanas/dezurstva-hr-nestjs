@@ -42,6 +42,7 @@ import { UserResponseDto } from './dto/find-user-response.dto';
 import { Serialize } from '../interceptors/serialize.interceptor';
 import { EmailService } from 'src/notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 const FILE_SIZE = 3 * 1000 * 1000;
 
@@ -53,6 +54,7 @@ export class UsersController {
     private readonly prismaService: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Post()
@@ -75,6 +77,7 @@ export class UsersController {
             this.prismaService,
             this.emailService,
             this.configService,
+            this.eventEmitter,
           ),
         );
       default:

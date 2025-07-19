@@ -14,10 +14,8 @@ import {
 } from './templateStrategies/types';
 import { UserRegisteredStrategy } from './templateStrategies/UserRegisteredStrategy';
 import { OrganisationRegisteredStrategy } from './templateStrategies/OrganisationRegisteredStrategy';
-import { AdminOrganisationRegisteredStrategy } from './templateStrategies/AdminOrganisationRegisteredStrategy';
 import { ForgotPasswordStrategy } from './templateStrategies/ForgotPasswordStrategy';
 import { OrganisationActivatedStrategy } from './templateStrategies/OrganisationActivatedStrategy';
-import { AdminUserCertificateUploadedStrategy } from './templateStrategies/AdminUserCertificateUploadedStrategy';
 import { AdminNotifyCustomerForCertificateUpload } from './templateStrategies/AdminNotifyCustomerForCertificateUpload';
 import { Resend } from 'resend';
 import { EmailCacheService } from '../../redis/email/email-cache.service';
@@ -92,26 +90,6 @@ export class EmailService {
     const template = this.getTemplate(data);
 
     return this.sendEmail(email, 'Korisnički račun aktiviran', template);
-  }
-
-  async sendAdminOrganisationRegisterEmail(
-    email: string,
-    data: UserRegisterTemplateData,
-  ) {
-    this.setStrategy(new AdminOrganisationRegisteredStrategy());
-    const template = this.getTemplate(data);
-
-    return this.sendEmail(email, 'Nova registracija organizacije', template);
-  }
-
-  async sendAdminUserCertificateUploadedEmail(
-    email: string,
-    data: UserRegisterTemplateData,
-  ) {
-    this.setStrategy(new AdminUserCertificateUploadedStrategy());
-    const template = this.getTemplate(data);
-
-    return this.sendEmail(email, 'Novi certifikat je dodan', template);
   }
 
   async sendAdminNotifyCustomerForCertificateUploadEmail(

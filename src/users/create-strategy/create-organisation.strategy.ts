@@ -5,6 +5,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { OrganisationAttributes, User } from '@prisma/client';
 import { EmailService } from '../../notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DiscordAdminInfoEvent } from '../../events/discord.events';
 
 export class CreateOrganisationStrategy implements ICreateStrategy {
   readonly #appName: string;
@@ -14,11 +16,11 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
   readonly #iban: string;
   readonly #swift: string;
   readonly #amount: string;
-  readonly #adminEmail: string;
   constructor(
     private prismaService: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.#appName = this.configService.getOrThrow('APP_NAME');
     this.#appUrl = this.configService.getOrThrow('APP_URL');
@@ -27,7 +29,6 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
     this.#iban = this.configService.getOrThrow('BANK_IBAN');
     this.#swift = this.configService.getOrThrow('BANK_SWIFT');
     this.#amount = this.configService.getOrThrow('AMOUNT');
-    this.#adminEmail = this.configService.getOrThrow('ADMIN_EMAIL_ADDRESS');
   }
   async create(
     createUserDto: CreateUserDto,
@@ -71,14 +72,19 @@ export class CreateOrganisationStrategy implements ICreateStrategy {
       year: new Date().getFullYear(),
     });
 
-    await this.emailService.sendAdminOrganisationRegisterEmail(
-      this.#adminEmail,
-      {
-        appName: this.#appName,
-        userEmail: email,
-        link: `${this.#appUrl}/admin/organisations/profile/${id}`,
-        year: new Date().getFullYear(),
-      },
+    this.eventEmitter.emit(
+      'discord.admin.info',
+      new DiscordAdminInfoEvent(
+        `🏢Organisation ${email} with ID ${id} has successfully registered. Check the bank account details 
+        and activate the account.`,
+        [
+          {
+            title: 'Activate account',
+            url: `${this.#appUrl}/admin/organisations/profile/${id}`,
+            color: 0x0099ff,
+          },
+        ],
+      ),
     );
   }
 }
