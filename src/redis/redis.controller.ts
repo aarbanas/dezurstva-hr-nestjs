@@ -1,4 +1,10 @@
-import { Controller, ForbiddenException, Get, Headers } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  ForbiddenException,
+  Get,
+  Headers,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EmailQueueService } from './email/email-queue.service';
 import { EmailCacheService } from './email/email-cache.service';
@@ -21,6 +27,22 @@ export class RedisController {
   @Get('process-email-queue')
   async processEmailQueue(@Headers('authorization') token: string) {
     if (token !== this.token) throw new ForbiddenException();
+
+    const dailyFirstEmailTimestamp =
+      await this.emailCacheService.getEmailCacheTimestamp();
+    if (!dailyFirstEmailTimestamp) {
+      throw new BadRequestException();
+    }
+
+    const now = new Date();
+    const elapsedTime =
+      now.getTime() - new Date(dailyFirstEmailTimestamp).getTime();
+    if (elapsedTime < 26 * 60 * 60 * 1000) {
+      this.emitEvent(
+        `❌️ Cron job skipped. 26hours did not pass since ${dailyFirstEmailTimestamp}.`,
+      );
+      return { success: false, message: '26 hours have not passed yet.' };
+    }
 
     this.emitEvent('🛠️ Cron job executed: Email queue processing.');
 
