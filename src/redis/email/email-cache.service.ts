@@ -48,11 +48,11 @@ export class EmailCacheService {
   async increaseEmailCount(): Promise<void> {
     const currentCount = await this.getCurrentEmailCount();
     const newCount = currentCount + 1;
+    await this.redisService.set(this.CACHE_KEY, newCount.toString());
+
     if (newCount === 1) {
       await this.setEmailCacheTimestamp();
     }
-
-    await this.redisService.set(this.CACHE_KEY, newCount.toString());
   }
 
   async enqueueEmail(data: EmailQueueData): Promise<void> {
