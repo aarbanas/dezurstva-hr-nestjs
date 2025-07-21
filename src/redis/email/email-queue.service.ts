@@ -25,7 +25,13 @@ export class EmailQueueService {
 
   async processQueue(): Promise<void> {
     const items = await this.getItemsFromQueue();
-    if (!items) return;
+    if (!items) {
+      this.eventEmitter.emit(
+        'discord.queue',
+        new DiscordQueueEvent(`📭 No items in the email queue. Returning...`),
+      );
+      return;
+    }
 
     for (const [index, item] of items.entries()) {
       if (index >= 99) {
@@ -46,9 +52,6 @@ export class EmailQueueService {
       // There is a rate limit of 1 email per second, so we wait a bit before processing the next one
       await this.sleep(1000);
     }
-
-    // Clear the queue after processing
-    await this.redisService.delete(this.QUEUE_KEY);
 
     this.eventEmitter.emit(
       'discord.queue',
