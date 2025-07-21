@@ -43,6 +43,10 @@ export class EmailCacheService {
 
   async resetDailyEmailCount(): Promise<void> {
     await this.redisService.set(this.CACHE_KEY, '0');
+    this.eventEmitter.emit(
+      'discord.queue',
+      new DiscordQueueEvent(`👌 Daily email count reset to 0.`),
+    );
   }
 
   async increaseEmailCount(): Promise<void> {
