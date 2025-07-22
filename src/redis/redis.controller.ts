@@ -25,8 +25,8 @@ export class RedisController {
 
   @Get('process-email-queue')
   async processEmailQueue(@Headers('authorization') token: string) {
-    console.log(token);
-    if (token !== this.token) throw new UnauthorizedException();
+    const authHeader = token?.split(' ')[1];
+    if (authHeader !== this.token) throw new UnauthorizedException();
 
     const dailyFirstEmailTimestamp =
       await this.emailCacheService.getEmailCacheTimestamp();
