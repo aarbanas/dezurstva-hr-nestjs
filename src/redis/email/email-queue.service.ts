@@ -47,7 +47,6 @@ export class EmailQueueService {
 
       const emailData: EmailQueueData = JSON.parse(item);
       this.eventEmitter.emit('resend.email', new ResendEmailEvent(emailData));
-      await this.deleteItemFromQueue(emailData);
 
       // There is a rate limit of 1 email per second, so we wait a bit before processing the next one
       await this.sleep(1000);
