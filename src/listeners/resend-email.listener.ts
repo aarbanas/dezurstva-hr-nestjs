@@ -9,10 +9,6 @@ export class ResendEmailListener {
 
   @OnEvent('resend.email')
   async handleUserCreatedEvent(event: ResendEmailEvent) {
-    return this.emailService.resendEmail(
-      event.emailData.to,
-      event.emailData.subject,
-      event.emailData.body,
-    );
+    return this.emailService.resendEmail(event.emailData);
   }
 }

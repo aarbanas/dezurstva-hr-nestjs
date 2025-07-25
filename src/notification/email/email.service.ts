@@ -19,7 +19,10 @@ import { OrganisationActivatedStrategy } from './templateStrategies/Organisation
 import { AdminNotifyCustomerForCertificateUpload } from './templateStrategies/AdminNotifyCustomerForCertificateUpload';
 import { Resend } from 'resend';
 import { EmailCacheService } from '../../redis/email/email-cache.service';
-import { EmailQueueData } from '../../redis/email/email-queue.service';
+import {
+  EmailQueueData,
+  EmailQueueService,
+} from '../../redis/email/email-queue.service';
 import { ApologyEmailForRegistrationWithIssues } from './templateStrategies/ApologyEmailForRegistrationWithIssues';
 import { DiscordQueueEvent } from '../../events/discord.events';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -36,6 +39,7 @@ export class EmailService {
     private readonly configService: ConfigService,
     private readonly emailCacheService: EmailCacheService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly emailQueueService: EmailQueueService,
   ) {
     this.#emailAddress = this.configService.getOrThrow('EMAIL_ADDRESS');
     this.nodeEnv = this.configService.getOrThrow('ENV');
@@ -106,8 +110,11 @@ export class EmailService {
     );
   }
 
-  async resendEmail(email: string, subject: string, content: string) {
-    return this.sendEmail(email, subject, content);
+  async resendEmail(emailData: EmailQueueData): Promise<void> {
+    const { to, subject, body } = emailData;
+    await this.sendEmail(to, subject, body);
+
+    await this.emailQueueService.deleteItemFromQueue(emailData);
   }
 
   private setStrategy(strategy: ITemplateStrategy) {
