@@ -104,7 +104,7 @@ export class UsersRepository {
     return { take, skip, orderBy, where };
   }
 
-  async find(query: FindUserDto, user: User): Promise<FindResponse<User>> {
+  async find(query: FindUserDto, user: User) {
     const { take, skip, where, orderBy } = this.prepareFindQuery(query, user);
 
     const [count, data] = await this.prismaService.$transaction([
@@ -132,11 +132,7 @@ export class UsersRepository {
     return { data, meta: { skip, take, count } };
   }
 
-  async findOne(
-    id: number,
-  ): Promise<
-    Omit<User, 'password' | 'userAttributesId' | 'organisationAttributesId'>
-  > {
+  async findOne(id: number) {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       select: {

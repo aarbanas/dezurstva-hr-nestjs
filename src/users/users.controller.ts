@@ -88,15 +88,55 @@ export class UsersController {
   @Get()
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  find(@Query() query: FindUserDto, @User() user: UserModel) {
-    return this.usersService.find(query, user);
+  async find(@Query() query: FindUserDto, @User() sessionUser: UserModel) {
+    const users = await this.usersService.find(query, sessionUser);
+    if (!users.data.length) {
+      return users;
+    }
+
+    return {
+      ...users,
+      data: users.data.map((user) => ({
+        id: user.id,
+        profilePhoto: user.profilePhoto,
+        userAttributes: {
+          firstname: user.userAttributes?.firstname,
+          lastname: user.userAttributes?.lastname,
+          city: user.userAttributes?.city,
+          type: user.userAttributes?.type,
+        },
+        ...(sessionUser.role === Role.ADMIN && { email: user.email }),
+      })),
+    };
   }
 
   @Get(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @User() sessionUser: UserModel,
+  ) {
+    const user = await this.usersService.findOne(id);
+    if (
+      sessionUser.role === Role.ADMIN ||
+      sessionUser.role === Role.ORGANISATION ||
+      sessionUser.id === id
+    ) {
+      return user;
+    }
+
+    return {
+      userAttributes: {
+        firstname: user.userAttributes?.firstname,
+        lastname: user.userAttributes?.lastname,
+        city: user.userAttributes?.city,
+        type: user.userAttributes?.type,
+        certificates: user.userAttributes?.certificates,
+      },
+      id: user.id,
+      profilePhoto: user.profilePhoto,
+    };
   }
 
   @Patch(':id')
