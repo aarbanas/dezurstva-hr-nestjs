@@ -104,8 +104,12 @@ export class UsersController {
           lastname: user.userAttributes?.lastname,
           city: user.userAttributes?.city,
           type: user.userAttributes?.type,
+          certificates: (user.userAttributes as any)?.certificates,
         },
-        ...(sessionUser.role === Role.ADMIN && { email: user.email }),
+        ...(sessionUser.role === Role.ADMIN && {
+          email: user.email,
+          active: user.active,
+        }),
       })),
     };
   }
